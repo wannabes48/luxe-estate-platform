@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { getProperties } from "@/lib/api";
-import PropertyCard from "@/components/PropertyCard";
+import { PropertyCard } from "@/components/PropertyCard";
 import PropertyGrid from '@/components/listings/PropertyGrid';
 import FilterBar from '@/components/listings/FilterBar';
 import Footer from "@/components/Footer";
