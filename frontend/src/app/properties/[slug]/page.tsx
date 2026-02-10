@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import PropertyMap from "@/components/PropertyMap";
 import MapButton from "@/components/MapButton";
 import { Metadata } from 'next';
+import AgentAvatar from "@/components/AgentAvatar";
 
 export default async function PropertyDetail({
     params 
@@ -23,7 +24,6 @@ export default async function PropertyDetail({
 
   // 1. Fetch the main property first
   const property = await getPropertyBySlug(slug);
-  const agent = property.agent;
 
   // 2. IMMEDIATE check if property exists
   if (!property) {
@@ -34,6 +34,8 @@ export default async function PropertyDetail({
       </main>
     );
   }
+
+  const agent = property.agent;
   const similarProperties = await getSimilarProperties(property.slug);
 
   // 3. Fetch similar properties only after we confirm the main property exists
@@ -105,6 +107,13 @@ export default async function PropertyDetail({
              </div>
              <div className="flex flex-col gap-2">
                 <h1 className="text-4xl font-serif">{property.title}</h1>
+                <p>Listed by: {property.agent?.name || "Unknown Agent"}</p>
+      
+                {/* Example for the Agent Avatar we built earlier */}
+                <AgentAvatar 
+                  src={property.agent?.image} 
+                  name={property.agent?.name || "Agent"} 
+                />
                 <div className="flex items-center gap-4">
                   <span className="text-stone-500">{property.location.name}</span>
                   <MapButton address={property.location.name} name={property.title} />

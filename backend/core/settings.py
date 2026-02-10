@@ -150,21 +150,16 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated', 
+        'rest_framework.permissions.AllowAny',
     ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/day',
+        'inquiry': '5/hour',
+    },
 }
 
-# Throttling (rate limiting)
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
-    'anon': '100/hour',
-    'user': '1000/day',  # Logged in admin
-    'inquiry': '5/hour', # Specific throttle for the contact form
-}
-
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
-}
+# Throttling (rate limiting) - already defined in REST_FRAMEWORK above
 
 # CORS - update this to include your frontend deployment origin(s)
 CORS_ALLOW_CREDENTIALS = True

@@ -1,8 +1,8 @@
 from rest_framework import viewsets, permissions, filters, status, generics
-from rest_framework.decorators import action, permission_classes, authentication_classes
+from rest_framework.decorators import action
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django.core.files.storage import default_storage
@@ -59,7 +59,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         serializer = PropertySerializer(similar_properties, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'], permission_classes=[AllowAny], authentication_classes=[])
+    @action(detail=True, methods=['get'], permission_classes=[AllowAny])
     def next(self, request, slug=None):
         current_property = self.get_object()
         # Find the next property created after this one
@@ -72,7 +72,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(next_obj)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'], permission_classes=[AllowAny], authentication_classes=[])
+    @action(detail=True, methods=['get'], permission_classes=[AllowAny])
     def previous(self, request, slug=None):
         current_property = self.get_object()
         prev_obj = Property.objects.filter(id__lt=current_property.id).order_by('-id').first()

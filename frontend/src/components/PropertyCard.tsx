@@ -42,7 +42,7 @@ export const PropertyCard = ({ property }: { property: any }) => {
               {property.location?.name || "Premium Location"}, {property.location?.city || "Kenya"}
             </p>
 
-            <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-8">
+            <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-8" onClick={(e) => e.stopPropagation()}>
               <span className="text-xl font-bold text-[#E91E63]">
                 Ksh {Number(property.price).toLocaleString()}
               </span>
@@ -51,15 +51,13 @@ export const PropertyCard = ({ property }: { property: any }) => {
               <span className="text-[10px] uppercase tracking-widest border-b border-black pb-1 group-hover:text-[#E91E63] group-hover:border-[#E91E63] transition-colors">
                 View Detail
               </span>
-              <a 
-                href={mapUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-[10px] uppercase tracking-tighter text-stone-400 hover:text-[#E91E63] flex items-center gap-1 transition-colors"
+              <button 
+                onClick={() => window.open(mapUrl, '_blank')}
+                className="text-[10px] uppercase tracking-tighter text-stone-400 hover:text-[#E91E63] flex items-center gap-1 transition-colors bg-none border-none p-0 cursor-pointer"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 Find on Map
-              </a>
+              </button>
             </div>
           </div>
         </motion.div>
