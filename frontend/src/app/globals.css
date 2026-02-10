@@ -1,0 +1,46 @@
+/* src/app/globals.css */
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0D0D0D; /* Rich Charcoal */
+  --accent: #E91E63;     /* Kai & Karo Pink */
+  --muted: #6B6B6B;
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-[#0D0D0D] antialiased;
+    font-feature-settings: "kern" 1;
+  }
+}
+
+/* Glassmorphism utility for the editorial feel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Editorial Typography */
+.tracking-hud {
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
