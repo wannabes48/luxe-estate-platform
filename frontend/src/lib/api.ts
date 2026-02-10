@@ -1,10 +1,14 @@
 /* src/lib/api.ts */
 
+// Get base URL - use NEXT_PUBLIC_API_URL for deployment, fallback to localhost for development
+const getBaseUrl = () => {
+  return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+};
+
 export async function getPropertyBySlug(slug: string) {
   if (!slug) throw new Error("No slug provided");
 
-  // Use a fallback if the env variable is missing
-  const baseUrl = process.env.API_URL || 'http://127.0.0.1:8000';
+  const baseUrl = getBaseUrl();
 
   console.log("FETCHING SLUG:", slug);
   
@@ -29,7 +33,7 @@ export async function getSimilarProperties(propertyId: string) {
     return [];
     }
 
-    const baseUrl = process.env.API_URL || 'http://127.0.0.1:8000';
+    const baseUrl = getBaseUrl();
 
     try {
         const res = await fetch(`${baseUrl}/api/properties/${propertyId}/similar/`, { next: { revalidate: 3600 } 
@@ -48,14 +52,15 @@ export async function getSimilarProperties(propertyId: string) {
 }
 
 export async function getFeaturedSlugs(limit = 12) {
-  const res = await fetch(`${process.env.API_URL}/api/properties/?is_featured=true&limit=${limit}`, { next: { revalidate: 3600 } })
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/api/properties/?is_featured=true&limit=${limit}`, { next: { revalidate: 3600 } })
   if (!res.ok) return []
   const data = await res.json()
   return data.map((p: any) => ({ slug: p.slug }))
 }
 
 export async function getNextPropertySlug(slug: string) {
-  const baseUrl = process.env.API_URL || 'http://127.0.0.1:8000';
+  const baseUrl = getBaseUrl();
   try {
     const res = await fetch(`${baseUrl}/api/properties/${slug}/next/`, {
       next: { revalidate: 60 } 
@@ -69,7 +74,7 @@ export async function getNextPropertySlug(slug: string) {
 }
 
 export async function getPreviousPropertySlug(slug: string) {
-  const baseUrl = process.env.API_URL || 'http://127.0.0.1:8000';
+  const baseUrl = getBaseUrl();
   try {
     const res = await fetch(`${baseUrl}/api/properties/${slug}/previous/`, {
       next: { revalidate: 60 } 
@@ -83,7 +88,7 @@ export async function getPreviousPropertySlug(slug: string) {
 }
 
 export async function getProperties(filters: any = {}) {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+    const baseUrl = getBaseUrl();
 
     const queryParams = new URLSearchParams(filters).toString();
     const url = `${baseUrl}/api/properties/${queryParams ? `?${queryParams}` : ''}`;
@@ -104,7 +109,7 @@ export async function getProperties(filters: any = {}) {
 }
 
 export async function getAdjacentProperties(slug: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+  const baseUrl = getBaseUrl();
   
   // Fetch both in parallel for speed
   const [nextRes, prevRes] = await Promise.all([
@@ -122,7 +127,7 @@ export async function getAdjacentProperties(slug: string) {
 }
 
 export async function getAgents() {
-  const baseUrl = 'http://127.0.0.1:8000'; // Match your Django port
+  const baseUrl = getBaseUrl();
   
   try {
     const res = await fetch(`${baseUrl}/api/agents/`, {
