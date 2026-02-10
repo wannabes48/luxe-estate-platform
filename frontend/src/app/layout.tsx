@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair } from 'next/font/google'
 import "./globals.css";
 import ClientCursor from '@/components/Cursor'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({
   variable: '--font-inter',
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} antialiased`}>
         <ClientCursor />
         {children}
+        <Analytics />
       </body>
     </html>
   );
