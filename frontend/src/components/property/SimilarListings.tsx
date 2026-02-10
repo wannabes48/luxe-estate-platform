@@ -4,18 +4,23 @@ import React from 'react';
 import { PropertyCard } from '../PropertyCard';
 import { motion } from 'framer-motion';
 
+interface Property {
+  id: string | number;
+  [key: string]: any;
+}
+
 interface SimilarListingsProps {
-  properties: any;
+  properties: Property[];
 }
 
 export default function SimilarListings({ properties }: SimilarListingsProps) {
   // Extract the actual array from the API response safely
-  const listingsArray = Array.isArray(properties) 
+  const listingsArray: Property[] = Array.isArray(properties) 
     ? properties 
-    : (properties?.results || []);
+    : [];
 
   // Don't render the section if no similar properties were found
-  if (!properties || properties.length === 0) return null;
+  if (!listingsArray || listingsArray.length === 0) return null;
 
   return (
     <section className="py-24 border-t border-stone-100 bg-white">
@@ -31,7 +36,7 @@ export default function SimilarListings({ properties }: SimilarListingsProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {properties.slice(0, 3).map((prop) => (
+          {properties.slice(0, 3).map((prop: Property) => (
             <PropertyCard key={prop.id} property={prop} />
           ))}
         </div>
