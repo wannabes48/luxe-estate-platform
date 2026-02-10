@@ -2,7 +2,17 @@
 import React from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 
-export default function FilterBar() {
+interface FilterBarProps {
+  initialFilters: {
+    price_min?: string;
+    price_max?: string;
+    location?: string;
+    bedrooms?: string;
+    view?: "grid" | "list";
+  };
+}
+
+export default function FilterBar({ initialFilters }: FilterBarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -34,6 +44,9 @@ export default function FilterBar() {
 
   return (
     <div className="flex flex-col md:flex-row gap-8 items-center justify-between border-b border-stone-100 pb-8 mb-12">
+      <div className="text-[10px] uppercase tracking-widest text-stone-400">
+        Active Location: {initialFilters.location || 'All Areas'}
+      </div>
       
       {/* HUD Location Selector */}
       <div className="flex gap-6 items-center">

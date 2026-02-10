@@ -59,8 +59,7 @@ export default async function PropertyGrid({ filters }: { filters: any }) {
       {properties.map((property: any) => (
         <PropertyCard 
           key={property.id} 
-          property={property} 
-          view={filters.view} 
+          property={property}
         />
       ))}
     </div>
