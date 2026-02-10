@@ -161,8 +161,6 @@ export default async function PropertyDetail({
       <SimilarListings properties={similarProperties} />
       {/* New Navigation Feature */}
       <PropertyNavigation prevSlug={prevSlug} nextSlug={nextSlug} />
-
-      <NextPropertyNav nextSlug={nextSlug} prevSlug={prevSlug} />
      <Footer />   
     </main>
   );
@@ -174,6 +172,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!resolvedParams.slug) return { title: "Property Not Found" };
   
   const property = await getPropertyBySlug(resolvedParams.slug);
+
+  if (!property) {
+    return { title: "Property Not Found" };
+  }
 
   return {
     title: `${property.title} | Exclusive Real Estate`,

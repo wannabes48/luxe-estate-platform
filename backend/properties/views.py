@@ -31,7 +31,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     ordering_fields = ['price', 'created_at']
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'similar']: # Added 'similar' here
+        if self.action in ['list', 'retrieve', 'similar', 'next', 'previous']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
@@ -59,7 +59,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         serializer = PropertySerializer(similar_properties, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'], permission_classes=[AllowAny])
+    @action(detail=True, methods=['get'])
     def next(self, request, slug=None):
         current_property = self.get_object()
         # Find the next property created after this one
@@ -72,7 +72,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(next_obj)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['get'], permission_classes=[AllowAny])
+    @action(detail=True, methods=['get'])
     def previous(self, request, slug=None):
         current_property = self.get_object()
         prev_obj = Property.objects.filter(id__lt=current_property.id).order_by('-id').first()
