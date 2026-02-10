@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-b5wsc6wpd()urx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.63.77.158', 'your-production-domain.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.63.77.158', 'luxe-estate-platform.onrender.com']
 
 
 # Application definition
@@ -172,7 +172,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    'https://your-frontend-domain.com',
+    'https://luxe-estate-platform.vercel.app',
 ]
 
 # Simple JWT settings
@@ -206,6 +206,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://luxe-estate-platform.onrender.com"
 ]
 
 SESSION_COOKIE_SAMESITE = 'Lax'
