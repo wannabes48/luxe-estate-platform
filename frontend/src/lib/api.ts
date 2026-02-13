@@ -158,3 +158,36 @@ export async function getAgents() {
     return [];
   }
 }
+
+export async function sendInquiry(inquiryData: {
+  property_id: string | number;
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+}) {
+  const baseUrl = getBaseUrl();
+
+  try {
+    const res = await fetch(`${baseUrl}/api/inquiries/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(inquiryData),
+      // Important for production: avoids caching POST requests
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Server responded with ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("Inquiry submission error:", error);
+    // Rethrow to allow the UI to show the specific "Server Connection Error"
+    throw error;
+  }
+}
