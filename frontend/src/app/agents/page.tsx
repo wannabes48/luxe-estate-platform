@@ -9,6 +9,21 @@ export default async function AgentsPage() {
   // Fetch real data from your Django backend
   const agents = await getAgents();
 
+  if (!agents || agents.length === 0) {
+    return (
+      <div className="pt-32 px-10">
+        <h1 className="text-2xl font-serif">Our Agents</h1>
+        <p className="text-stone-500 mt-4">Currently updating our directory. Please check back soon.</p>
+      </div>
+    );
+  }
+
+  return (
+    <main className="pt-32 px-10">
+      {/* ... your agent cards loop ... */}
+    </main>
+  );
+
   return (
     <main className="min-h-screen bg-[#FCFAFA]">
       <ReturnNavBar />

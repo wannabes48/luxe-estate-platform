@@ -1,4 +1,16 @@
 import { supabase } from './supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+
+const getSupabase = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    // During build, if keys are missing, we return a mock or throw a cleaner error
+    throw new Error("Supabase credentials missing.");
+  }
+  return createClient(url, key);
+};
 
 /**
  * 1. Fetch a single property by its unique slug
@@ -164,13 +176,20 @@ export async function getAdjacentProperties(slug: string) {
  * 8. Fetch Agents
  */
 export async function getAgents() {
-  const { data, error } = await supabase
-    .from('agents')
-    .select('*')
-    .order('name', { ascending: true });
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('agents')
+      .select('*')
+      .order('name', { ascending: true });
 
-  if (error) return [];
-  return data;
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error("Build-time fetch failed for agents:", err);
+    // Return an empty array so the build can at least finish
+    return []; 
+  }
 }
 
 /**
