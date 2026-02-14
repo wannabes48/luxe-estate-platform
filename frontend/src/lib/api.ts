@@ -1,17 +1,6 @@
 import { supabase } from './supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 
-const getSupabase = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    // During build, if keys are missing, we return a mock or throw a cleaner error
-    throw new Error("Supabase credentials missing.");
-  }
-  return createClient(url, key);
-};
-
 /**
  * 1. Fetch a single property by its unique slug
  * We use ilike for case-insensitive matching.
