@@ -6,6 +6,7 @@ import { submitInquiry } from '@/app/actions'
 import { motion, AnimatePresence } from 'framer-motion'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { sendInquiry } from '@/lib/api'
 
 // 1. Define Validation Schema (Aligned with Django model)
 const inquirySchema = z.object({
@@ -20,29 +21,45 @@ type InquiryData = z.infer<typeof inquirySchema>
 
 export default function ContactForm({ propertyId }: { propertyId?: string }) {
   const [isSuccess, setIsSuccess] = useState(false);
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<InquiryData>({
+  const { register, formState: { errors, isSubmitting }, reset } = useForm<InquiryData>({
     resolver: zodResolver(inquirySchema),
   });
 
   // 2. Optimized Submit Logic using Server Action
-  const onSubmit = async (data: InquiryData) => {
-    if (data.hp_field) return; // Honeypot check
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
 
-    // Convert Zod data to FormData for the Server Action
-    const formData = new FormData();
-    formData.append('propertyId', propertyId || '');
-    formData.append('name', data.full_name);
-    formData.append('email', data.email);
-    formData.append('message', data.message);
+    const submission = {
+    full_name: formData.get('full_name') as string,
+    email: formData.get('email') as string,
+    message: formData.get('message') as string,
+    phone: formData.get('phone') as string || "",
+    // property_id is intentionally left out here
+  };
 
-    const result = await submitInquiry(formData);
+  console.log("Pre-flight Payload Check:", submission);
 
-    if (result.success) {
-      setIsSuccess(true);
-      reset();
-    } else {
-      alert(result.error || "Submission failed. Please check your connection.");
-    }
+  try {
+    // This now posts to the DB via our API function
+    await sendInquiry(submission);
+    
+    // Also trigger the email notification
+    await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...submission, property_name: "General Inquiry" })
+    });
+
+    setIsSuccess(true);
+    reset();
+    alert("Message sent successfully!");
+  } catch (err) {
+    console.error("Critical Error:", err);
+  } finally {
+    reset(); // Clear the form after submission
+  } 
+
   }
 
   return (
@@ -51,7 +68,7 @@ export default function ContactForm({ propertyId }: { propertyId?: string }) {
         {!isSuccess ? (
           <motion.form
             key="contact-form"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={(e) => handleSubmit(e)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -20 }}

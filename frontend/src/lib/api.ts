@@ -176,21 +176,29 @@ export async function getAgents() {
 /**
  * 9. Submit Inquiry
  */
-export async function sendInquiry(inquiryData: any) {
+export async function sendInquiry(inquiryData:any) {
   const { data, error } = await supabase
     .from('inquiries')
-    .insert([
-      {
-        property_id: inquiryData.property_id,
-        full_name: inquiryData.name || inquiryData.full_name,
-        email: inquiryData.email,
-        phone: inquiryData.phone,
-        message: inquiryData.message,
-      }
-    ])
+    .insert([inquiryData])
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("Database Log Failure:", error.message);
+     throw new Error(error.message);
+  } 
+
+  console.log(`✅ Inquiry successfully saved for: ${inquiryData.full_name}`);
+  
+  // Trigger email notification (fire-and-forget)
+  fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...inquiryData,
+      property_name: "Luxury Listing Inquiry" // You can enhance this by fetching the property name if property_id is provided
+    })
+  }).catch(err => console.error("Email notification failed:", err));
+
   return data;
 }
