@@ -55,7 +55,7 @@ const FeaturedCarousel: React.FC = () => {
                   alt={item.title}
                   crop="fill"
                   gravity="auto"
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-105"
                 />
                 <div className="absolute bottom-4 left-4 glass-panel px-4 py-2">
                    <p className="text-white text-[10px] tracking-[0.3em] uppercase">Featured / {item.location}</p>

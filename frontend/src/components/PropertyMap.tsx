@@ -11,7 +11,7 @@ export default function PropertyMap({ locationName, city }: { locationName: stri
   return (
     <section className="mt-20">
       <h3 className="font-serif text-2xl mb-6 text-[#0D0D0D]">Location & Context</h3>
-      <div className="w-full h-[500px] bg-stone-100 grayscale hover:grayscale-0 transition-all duration-700 rounded-sm overflow-hidden border border-stone-200">
+      <div className="w-full h-[500px] bg-stone-100 transition-all duration-700 rounded-sm overflow-hidden border border-stone-200">
         <iframe
           width="100%"
           height="100%"

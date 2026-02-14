@@ -19,12 +19,6 @@ export default async function AgentsPage() {
   }
 
   return (
-    <main className="pt-32 px-10">
-      {/* ... your agent cards loop ... */}
-    </main>
-  );
-
-  return (
     <main className="min-h-screen bg-[#FCFAFA]">
       <ReturnNavBar />
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-80px)]">
@@ -38,7 +32,7 @@ export default async function AgentsPage() {
               {agents.length > 0 ? (
                 agents.map((agent: any, i: number) => (
                  <div key={agent.id || i} className="group">
-                   <AgentAvatar src={agent.image} name={agent.name} />
+                   <AgentAvatar src={agent.image_url} name={agent.name} />
                    <h2 className="font-serif text-5xl mb-3 text-[#0D0D0D] group-hover:italic transition-all">{agent.name}</h2>
                    <p className="text-[10px] uppercase tracking-[0.3em] text-stone-400 mb-8">{agent.role}</p>
                    
@@ -70,7 +64,7 @@ export default async function AgentsPage() {
                           WhatsApp
                         </a>
                       </div>
-                      <div className="relative h-24 w-24 overflow-hidden rounded-full bg-stone-100 mb-6">
+                      <div>
                       </div>
                    </div>
 
@@ -78,13 +72,25 @@ export default async function AgentsPage() {
                    <div className="mt-8">
                       <p className="text-[9px] uppercase tracking-widest text-stone-400 mb-3">Assigned Portfolio</p>
                       <ul className="space-y-1">
-                        {agent.properties?.map((p: any, index: number) => (
-                          <li key={p.id || `prop-${index}`} className="text-xs italic text-stone-500">
-                            <Link href={`/properties/${p.slug}`}>
-                              — {p.title}
-                            </Link>
+                        {agent.properties && agent.properties.length > 0 ? (
+                          agent.properties.map((property: any, index: number) => (
+                            <li 
+                              key={property.id || `prop-${index}`} 
+                              className="text-xs italic text-stone-500"
+                            >
+                              <Link 
+                                href={`/properties/${property.slug}`} 
+                                className="hover:underline hover:text-[#E91E63] transition-colors"
+                              >
+                                — {property.title || "Untitled Property"}
+                              </Link>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="text-[10px] uppercase tracking-tighter text-stone-300">
+                            No active listings
                           </li>
-                        ))}
+                        )}
                       </ul>
                    </div>
                  </div>

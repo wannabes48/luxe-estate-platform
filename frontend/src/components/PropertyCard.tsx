@@ -25,7 +25,7 @@ export const PropertyCard = ({ property }: { property: any }) => {
               alt={property.title}
               crop="fill"
               gravity="auto"
-              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
+              className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
               loading="lazy"
             />
             

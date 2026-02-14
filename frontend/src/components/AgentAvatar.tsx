@@ -8,7 +8,7 @@ export default function AgentAvatar({ src, name }: { src: string; name: string }
       <img 
         src={src || fallbackImage}
         alt={name}
-        className="h-full w-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+        className="h-full w-full object-cover transition-all duration-500"
         onError={(e) => {
           (e.target as HTMLImageElement).src = 'fallbackImage'; // Fallback if image fails
         }}

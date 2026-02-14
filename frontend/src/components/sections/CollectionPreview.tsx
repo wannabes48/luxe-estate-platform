@@ -61,7 +61,7 @@ const CollectionPreview: React.FC = () => {
               alt="Architectural signs and design language"
               crop="fill"
               gravity="center"
-              className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000 duration-700"
+              className="w-full h-full object-cover transition-all duration-1000 duration-700"
             />
             {/* Subtle Overlay HUD */}
             <div className="absolute bottom-0 right-0 bg-white p-6 md:p-10 max-w-[240px]">
