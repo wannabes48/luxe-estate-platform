@@ -1,5 +1,16 @@
 "use server"
 import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// If these are missing during the Vercel build, the fetch will fail
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Missing Supabase Env Variables. Check Vercel Settings.")
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function submitInquiry(formData: FormData) {
   const propertyId = formData.get('propertyId');
@@ -19,10 +30,8 @@ export async function submitInquiry(formData: FormData) {
     message: formData.get('message')?.toString() || '',
   };
 
-  const baseUrl = process.env.API_URL || 'http://127.0.0.1:8000';
-
   try {
-    const response = await fetch(`${baseUrl}/api/inquiries/`, {
+    const response = await fetch(`${supabaseUrl}/api/inquiries/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(rawData),

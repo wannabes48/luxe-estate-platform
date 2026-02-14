@@ -1,5 +1,16 @@
 import React from 'react'
 import { PropertyCard } from '@/components/PropertyCard'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+// If these are missing during the Vercel build, the fetch will fail
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Missing Supabase Env Variables. Check Vercel Settings.")
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Define a type for the properties to improve DX
 interface Property {
@@ -11,7 +22,6 @@ interface Property {
 async function getProperties(filters: any) {
   // Use a single source for the URL. 
   // For Server Components, process.env.API_URL is preferred.
-  const baseUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
   
   // Clean filters: Remove empty strings, nulls, or undefined values
   const cleanFilters = Object.entries(filters).reduce((acc: any, [k, v]) => {
@@ -22,7 +32,7 @@ async function getProperties(filters: any) {
   const query = new URLSearchParams(cleanFilters).toString();
 
   try {
-    const res = await fetch(`${baseUrl}/api/properties/?${query}`, {
+    const res = await fetch(`${supabaseUrl}/api/properties/?${query}`, {
       next: { revalidate: 3600 },
     });
 
