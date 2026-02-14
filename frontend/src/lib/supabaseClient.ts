@@ -12,4 +12,4 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
   console.error("CRITICAL: NEXT_PUBLIC_SUPABASE_URL is missing!");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl  || '', supabaseAnonKey || '');

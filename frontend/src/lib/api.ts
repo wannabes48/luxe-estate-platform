@@ -139,24 +139,30 @@ export async function getPreviousPropertySlug(slug: string) {
  * 6. Fetch All Properties with Filters
  */
 export async function getProperties(filters: any = {}) {
-  let query = supabase
-    .from('properties')
-    .select(`
-      *,
-      location:locations(name, city),
-      images:property_images(*)
-    `);
+  try {
+    let query = supabase
+      .from('properties')
+      .select(`
+        *,
+        location:locations(name, city),
+        images:property_images(*)
+      `);
 
-  if (filters.is_featured) query = query.eq('is_featured', true);
-  if (filters.status) query = query.eq('status', filters.status);
+    if (filters.is_featured) query = query.eq('is_featured', true);
+    if (filters.status) query = query.eq('status', filters.status);
   
-  const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query.order('created_at', { ascending: false });
 
-  if (error) {
-    console.error("Error fetching listings:", error.message);
+    if (error) {
+      console.error("Error fetching listings:", error.message);
+      return [];
+    }
+    return data || [];
+  } catch (err: any) {
+    // This catches "Fetch Failed" (Network issues/Invalid URLs)
+    console.error("Network/Connection Error in getProperties:", err.message);
     return [];
   }
-  return data;
 }
 
 /**
@@ -177,7 +183,6 @@ export async function getAdjacentProperties(slug: string) {
  */
 export async function getAgents() {
   try {
-    const supabase = getSupabase();
     const { data, error } = await supabase
       .from('agents')
       .select('*')
