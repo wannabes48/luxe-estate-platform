@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-b5wsc6wpd()urx601%z)8bx@4@f!h(1q*fd3*&z6)yuyh#qu49')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '10.63.77.158', 'luxe-estate-platform.onrender.com', '.vercel.app']
 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_filters',
     'cloudinary_storage',
     'cloudinary',
+    'import_export',
 ]
 
 MIDDLEWARE = [
@@ -127,7 +128,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Media files (for ImageField uploads)
 MEDIA_URL = '/media/'
@@ -201,7 +206,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://luxe-estate-platform.onrender.com"
+    "https://chaokohquifjtaxkjxgv.supabase.co"
 ]
 
 SESSION_COOKIE_SAMESITE = 'Lax'

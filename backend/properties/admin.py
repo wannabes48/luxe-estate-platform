@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Location, Property, PropertyImage, Inquiry, Agent
+from import_export.admin import ExportActionMixin
 
 
 @admin.register(Location)
@@ -15,7 +16,7 @@ class PropertyImageInline(admin.TabularInline):
 
 
 @admin.register(Property)
-class PropertyAdmin(admin.ModelAdmin):
+class PropertyAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = ('title', 'location', 'price', 'status', 'is_featured', 'created_at')
     list_filter = ('status', 'is_featured', 'location')
     search_fields = ('title', 'description', 'slug')
@@ -35,3 +36,4 @@ class InquiryAdmin(admin.ModelAdmin):
     display_property.short_description = 'Property'
 
 admin.site.register(Agent)
+

@@ -1,193 +1,196 @@
-/* src/lib/api.ts */
+import { supabase } from './supabaseClient';
 
-// Get base URL - use NEXT_PUBLIC_API_URL for deployment, fallback to localhost for development
-const getBaseUrl = () => {
-  return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-};
-
+/**
+ * 1. Fetch a single property by its unique slug
+ * We use ilike for case-insensitive matching.
+ */
 export async function getPropertyBySlug(slug: string) {
   if (!slug) throw new Error("No slug provided");
 
-  const baseUrl = getBaseUrl();
+  const { data, error } = await supabase
+    .from('properties')
+    .select(`
+      *,
+      location:locations(*),
+      agent:agents(*),
+      images:property_images(*)
+    `)
+    .ilike('slug', slug)
+    .maybeSingle();
 
-  console.log("FETCHING SLUG:", slug);
-  
-  try {
-    const res = await fetch(`${baseUrl}/api/properties/${slug}/`, { 
-      cache: 'no-store', // Ensure we get fresh data for each property detail view
-      credentials: 'include' // Include cookies for CSRF protection if needed
-  });
-
-  if (!res.ok) return null;
-  return await res.json();
-  } catch (error) {
-    console.error("Fetch error:", error);
+  if (error) {
+    console.error("Supabase error fetching property:", error.message);
     return null;
   }
+  return data;
 }
 
+/**
+ * 2. Fetch Similar Properties
+ * Replicates the logic of your old Django /similar/ endpoint.
+ * It finds properties in the same location but excludes the current one.
+ */
 export async function getSimilarProperties(propertyId: string) {
-    // If propertyId is missing, don't even try the fetch
-    if (!propertyId) {
-        console.error("getSimilarProperties: No propertyId provided");
+  if (!propertyId) return [];
+
+  // Get the location_id of the current property first
+  const { data: currentProp } = await supabase
+    .from('properties')
+    .select('location_id')
+    .eq('id', propertyId)
+    .maybeSingle();
+
+  if (!currentProp?.location_id) return [];
+
+  const { data, error } = await supabase
+    .from('properties')
+    .select(`
+      *,
+      location:locations(name, city),
+      images:property_images(*)
+    `)
+    .eq('location_id', currentProp.location_id)
+    .neq('id', propertyId) // Don't show the current property
+    .limit(4);
+
+  if (error) {
+    console.error("Error fetching similar properties:", error.message);
     return [];
-    }
-
-    const baseUrl = getBaseUrl();
-
-    try {
-        const res = await fetch(`${baseUrl}/api/properties/${propertyId}/similar/`, { next: { revalidate: 3600 } 
-    });
-
-    if (!res.ok) {
-      console.warn(`Similar API failed with status: ${res.status}`);
-       return [] // Return empty array if call fails to prevent UI crash
-    }
-    return await res.json();
-    } catch (error) {
-    // This catches "fetch failed" (network down, refuse connection, etc.)
-    console.error("Network error fetching similar properties:", error);
-    return []; 
   }
+  return data;
 }
 
+/**
+ * 3. Fetch Featured Slugs
+ * Used for static site generation paths.
+ */
 export async function getFeaturedSlugs(limit = 12) {
-  const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/api/properties/?is_featured=true&limit=${limit}`, { next: { revalidate: 3600 } })
-  if (!res.ok) return []
-  const data = await res.json()
-  return data.map((p: any) => ({ slug: p.slug }))
+  const { data, error } = await supabase
+    .from('properties')
+    .select('slug')
+    .eq('is_featured', true)
+    .limit(limit);
+
+  if (error) return [];
+  return data.map((p: any) => ({ slug: p.slug }));
 }
 
+/**
+ * 4. Navigation: Get Next Property Slug
+ * Replicates /api/properties/${slug}/next/
+ */
 export async function getNextPropertySlug(slug: string) {
-  const baseUrl = getBaseUrl();
-  try {
-    const res = await fetch(`${baseUrl}/api/properties/${slug}/next/`, {
-      next: { revalidate: 60 } 
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.slug;
-  } catch (error) {
-    return null;
-  }
+  const { data: current } = await supabase
+    .from('properties')
+    .select('created_at')
+    .ilike('slug', slug)
+    .maybeSingle();
+
+  if (!current) return null;
+
+  const { data: next } = await supabase
+    .from('properties')
+    .select('slug')
+    .gt('created_at', current.created_at)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  return next?.slug || null;
 }
 
+/**
+ * 5. Navigation: Get Previous Property Slug
+ * Replicates /api/properties/${slug}/previous/
+ */
 export async function getPreviousPropertySlug(slug: string) {
-  const baseUrl = getBaseUrl();
-  try {
-    const res = await fetch(`${baseUrl}/api/properties/${slug}/previous/`, {
-      next: { revalidate: 60 } 
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.slug;
-  } catch (error) {
-    return null;
-  }
+  const { data: current } = await supabase
+    .from('properties')
+    .select('created_at')
+    .ilike('slug', slug)
+    .maybeSingle();
+
+  if (!current) return null;
+
+  const { data: prev } = await supabase
+    .from('properties')
+    .select('slug')
+    .lt('created_at', current.created_at)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return prev?.slug || null;
 }
 
+/**
+ * 6. Fetch All Properties with Filters
+ */
 export async function getProperties(filters: any = {}) {
-    const baseUrl = getBaseUrl();
+  let query = supabase
+    .from('properties')
+    .select(`
+      *,
+      location:locations(name, city),
+      images:property_images(*)
+    `);
 
-    const queryParams = new URLSearchParams(filters).toString();
-    const url = `${baseUrl}/api/properties/${queryParams ? `?${queryParams}` : ''}`;
-    
-    const res = await fetch(url, { 
-    cache: 'no-store',
-    credentials: 'include' // This forces Next.js to fetch fresh data every time
-  });
+  if (filters.is_featured) query = query.eq('is_featured', true);
+  if (filters.status) query = query.eq('status', filters.status);
+  
+  const { data, error } = await query.order('created_at', { ascending: false });
 
-  if (!res.ok) {
-    console.error(`Fetch failed! Status: ${res.status} (${res.statusText})`);
-    
-    // Return empty array instead of crashing the whole site
+  if (error) {
+    console.error("Error fetching listings:", error.message);
     return [];
   }
-
-  return res.json();
+  return data;
 }
 
+/**
+ * 7. Combined Navigation
+ * Efficiency helper to fetch both next and prev in parallel.
+ */
 export async function getAdjacentProperties(slug: string) {
-  const baseUrl = getBaseUrl();
-  
-  // Fetch both in parallel for speed
-  const [nextRes, prevRes] = await Promise.all([
-    fetch(`${baseUrl}/api/properties/${slug}/next/`, { cache: 'no-store' }),
-    fetch(`${baseUrl}/api/properties/${slug}/previous/`, { cache: 'no-store' })
+  const [nextSlug, prevSlug] = await Promise.all([
+    getNextPropertySlug(slug),
+    getPreviousPropertySlug(slug)
   ]);
 
-  const nextData = nextRes.ok ? await nextRes.json() : null;
-  const prevData = prevRes.ok ? await prevRes.json() : null;
-
-  return {
-    nextSlug: nextData?.slug || null,
-    prevSlug: prevData?.slug || null
-  };
+  return { nextSlug, prevSlug };
 }
 
+/**
+ * 8. Fetch Agents
+ */
 export async function getAgents() {
-  const baseUrl = getBaseUrl();
-  
-  try {
-    const res = await fetch(`${baseUrl}/api/agents/`, {
-      cache: 'no-store', // Ensures fresh data if you add an agent in Django Admin
-      credentials: 'include'
-    });
+  const { data, error } = await supabase
+    .from('agents')
+    .select('*')
+    .order('name', { ascending: true });
 
-    if (!res.ok){
-      console.error(`Failed to fetch agents: ${res.status}`);
-       return [];
-    }   
-
-    const data = await res.json();
-
-    if (data && data.results && Array.isArray(data.results)) {
-      return data.results; 
-    }
-
-    if (Array.isArray(data)) {
-      return data;
-    }
-
-    // 3. Fallback if the data format is unexpected
-    return [];
-
-    } catch (error) {
-    console.error("Error fetching agents:", error);
-    return [];
-  }
+  if (error) return [];
+  return data;
 }
 
-export async function sendInquiry(inquiryData: {
-  property_id: string | number;
-  name: string;
-  email: string;
-  phone?: string;
-  message: string;
-}) {
-  const baseUrl = getBaseUrl();
+/**
+ * 9. Submit Inquiry
+ */
+export async function sendInquiry(inquiryData: any) {
+  const { data, error } = await supabase
+    .from('inquiries')
+    .insert([
+      {
+        property_id: inquiryData.property_id,
+        full_name: inquiryData.name || inquiryData.full_name,
+        email: inquiryData.email,
+        phone: inquiryData.phone,
+        message: inquiryData.message,
+      }
+    ])
+    .select()
+    .single();
 
-  try {
-    const res = await fetch(`${baseUrl}/api/inquiries/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(inquiryData),
-      // Important for production: avoids caching POST requests
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.detail || `Server responded with ${res.status}`);
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error("Inquiry submission error:", error);
-    // Rethrow to allow the UI to show the specific "Server Connection Error"
-    throw error;
-  }
+  if (error) throw new Error(error.message);
+  return data;
 }
