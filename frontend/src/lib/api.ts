@@ -177,10 +177,14 @@ export async function getAgents() {
       .select('*')
       .order('name', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase Error:", error.message);  
+      return [];
+    };
+    
     return data || [];
-  } catch (err) {
-    console.error("Build-time fetch failed for agents:", err);
+  } catch (error) {
+    console.error("Build-time fetch failed for agents:", error);
     // Return an empty array so the build can at least finish
     return []; 
   }
