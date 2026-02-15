@@ -24,22 +24,22 @@ export default function FilterBar({ initialFilters }: FilterBarProps) {
   const handleFilterChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString())
     
-    if (value) {
+    if (value && value !== 'all') {
       params.set(key, value)
     } else {
       params.delete(key)
     }
 
     // 2. Update the URL. Next.js handles the data re-fetching in the parent Server Component.
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-  }
+    router.push(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+  };
 
   const locations = [
     { name: 'All', value: '' },
-    { name: 'Nairobi', value: 'nairobi' },
-    { name: 'Mombasa', value: 'mombasa' },
-    { name: 'Nakuru', value: 'nakuru' },
-    { name: 'Kisumu', value: 'kisumu' },
+    { name: 'Nairobi', value: 'Nairobi' },
+    { name: 'Mombasa', value: 'Mombasa' },
+    { name: 'Nakuru', value: 'Nakuru' },
+    { name: 'Kisumu', value: 'Kisumu' },
   ]
 
   return (
@@ -50,7 +50,7 @@ export default function FilterBar({ initialFilters }: FilterBarProps) {
       
       {/* HUD Location Selector */}
       <div className="flex gap-6 items-center">
-        <span className="text-[9px] uppercase tracking-[0.4em] text-stone-400 font-bold">Location //</span>
+        <span className="text-[9px] uppercase tracking-[0.4em] text-stone-400 font-bold">Location</span>
         <div className="flex gap-3">
           {locations.map((loc) => {
             const isActive = currentLocation === loc.value

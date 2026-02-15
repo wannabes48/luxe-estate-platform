@@ -2,11 +2,9 @@
 "use client"
 import React, { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
-import { submitInquiry } from '@/app/actions'
 import { motion, AnimatePresence } from 'framer-motion'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { sendInquiry } from '@/lib/api'
 
 // 1. Define Validation Schema (Aligned with Django model)
 const inquirySchema = z.object({
@@ -26,40 +24,45 @@ export default function ContactForm({ propertyId }: { propertyId?: string }) {
   });
 
   // 2. Optimized Submit Logic using Server Action
+  // 2. Optimized Submit Logic using Server Action
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
     const submission = {
-    full_name: formData.get('full_name') as string,
-    email: formData.get('email') as string,
-    message: formData.get('message') as string,
-    phone: formData.get('phone') as string || "",
-    // property_id is intentionally left out here
-  };
+      full_name: formData.get('full_name') as string,
+      email: formData.get('email') as string,
+      message: formData.get('message') as string,
+      phone: formData.get('phone') as string || "",
+      property_name: "General Inquiry" // Context for the email
+      // property_id is undefined for general inquiries
+    };
 
-  console.log("Pre-flight Payload Check:", submission);
+    console.log("Pre-flight Payload Check:", submission);
 
-  try {
-    // This now posts to the DB via our API function
-    await sendInquiry(submission);
-    
-    // Also trigger the email notification
-    await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...submission, property_name: "General Inquiry" })
-    });
+    try {
+      // Submit to Server-Side API (Bypasses RLS)
+      const response = await fetch('/api/inquire', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submission),
+      });
 
-    setIsSuccess(true);
-    reset();
-    alert("Message sent successfully!");
-  } catch (err) {
-    console.error("Critical Error:", err);
-  } finally {
-    reset(); // Clear the form after submission
-  } 
+      const result = await response.json();
 
+      if (!response.ok) {
+        throw new Error(result.error || 'Submission failed');
+      }
+
+      setIsSuccess(true);
+      reset();
+      // alert("Message sent successfully!"); // Removed alert as we have UI feedback
+    } catch (err: any) {
+      console.error("Critical Error:", err);
+      alert("Failed to send message: " + err.message);
+    }
   }
 
   return (
@@ -88,18 +91,18 @@ export default function ContactForm({ propertyId }: { propertyId?: string }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
               <div className="relative border-b border-stone-300 pb-2 focus-within:border-[#E91E63] transition-colors">
-                <input 
-                   {...register('email')} 
-                   placeholder="Email Address" 
-                   className="w-full bg-transparent outline-none font-sans uppercase text-xs tracking-widest" 
+                <input
+                  {...register('email')}
+                  placeholder="Email Address"
+                  className="w-full bg-transparent outline-none font-sans uppercase text-xs tracking-widest"
                 />
                 {errors.email && <span className="text-red-500 text-[10px] uppercase absolute -bottom-5 left-0">{errors.email.message}</span>}
               </div>
               <div className="relative border-b border-stone-300 pb-2 focus-within:border-[#E91E63] transition-colors">
-                <input 
-                   {...register('phone')} 
-                   placeholder="Phone Number (Optional)" 
-                   className="w-full bg-transparent outline-none font-sans uppercase text-xs tracking-widest" 
+                <input
+                  {...register('phone')}
+                  placeholder="Phone Number (Optional)"
+                  className="w-full bg-transparent outline-none font-sans uppercase text-xs tracking-widest"
                 />
               </div>
             </div>
@@ -130,7 +133,7 @@ export default function ContactForm({ propertyId }: { propertyId?: string }) {
             className="flex flex-col items-center justify-center py-20 text-center"
           >
             <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mb-6">
-              <motion.svg 
+              <motion.svg
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.8, ease: "easeInOut" }}
@@ -143,7 +146,7 @@ export default function ContactForm({ propertyId }: { propertyId?: string }) {
             <p className="text-stone-500 text-sm leading-relaxed max-w-xs mx-auto">
               Your inquiry has been logged. Our concierge will contact you shortly.
             </p>
-            <button 
+            <button
               onClick={() => setIsSuccess(false)}
               className="mt-10 text-[10px] uppercase tracking-widest text-stone-400 hover:text-black underline underline-offset-8 transition-all"
             >

@@ -1,8 +1,8 @@
 /* src/app/properties/[slug]/page.tsx */
-import { 
-  getPropertyBySlug, 
-  getSimilarProperties, 
-  getNextPropertySlug, 
+import {
+  getPropertyBySlug,
+  getSimilarProperties,
+  getNextPropertySlug,
   getPreviousPropertySlug,
   getAdjacentProperties
 } from "@/lib/api";
@@ -20,9 +20,9 @@ import { Metadata } from 'next';
 import AgentAvatar from "@/components/AgentAvatar";
 
 export default async function PropertyDetail({
-    params 
-}: { 
-  params: Promise<{ slug: string }> 
+  params
+}: {
+  params: Promise<{ slug: string }>
 }) {
   const { slug } = await params;
 
@@ -43,13 +43,13 @@ export default async function PropertyDetail({
   const similarProperties = await getSimilarProperties(property.slug);
 
   // 2. Fetch associated data in parallel using the correct identifiers (UUIDs)
-  const [ similar ] = await Promise.all([
-    getSimilarProperties(property.slug), 
-    getNextPropertySlug(property.slug), 
+  const [similar] = await Promise.all([
+    getSimilarProperties(property.slug),
+    getNextPropertySlug(property.slug),
     getPreviousPropertySlug(property.slug)
   ]);
 
-  const { nextSlug, prevSlug } = await getAdjacentProperties(property.slug);
+  const { nextProp, prevProp } = await getAdjacentProperties(property.slug);
 
   const agent = property.agent;
   const coverImage = property.images?.find((img: any) => img.is_cover) || property.images?.[0];
@@ -57,7 +57,7 @@ export default async function PropertyDetail({
   return (
     <main className="bg-[#FCFAFA] min-h-screen pb-24 relative">
       <PropertyReturnNavBar />
-      
+
       {/* Visual Layer: Modern Horizontal Scroll Gallery 
         We place this here to ensure it spans correctly across the top of the narrative.
       */}
@@ -66,13 +66,13 @@ export default async function PropertyDetail({
           <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar gap-4 py-10 px-6 md:px-12">
             {property.images && property.images.length > 0 ? (
               property.images.map((img: any) => (
-                <div 
-                  key={img.id} 
+                <div
+                  key={img.id}
                   className="flex-shrink-0 w-[85vw] md:w-[600px] aspect-[4/5] snap-center"
                 >
-                  <img 
-                    src={img.image_url} 
-                    alt={img.alt_text || property.title} 
+                  <img
+                    src={img.image_url}
+                    alt={img.alt_text || property.title}
                     className="w-full h-full object-cover rounded-sm shadow-xl"
                     loading="lazy"
                   />
@@ -113,7 +113,7 @@ export default async function PropertyDetail({
           </header>
 
           <PropertySpecs specs={property} />
-          
+
           <article className="prose prose-stone max-w-none mt-20">
             <h3 className="font-serif text-3xl text-[#0D0D0D] mb-8">The Narrative</h3>
             <p className="text-stone-600 text-lg leading-relaxed whitespace-pre-line">
@@ -123,36 +123,36 @@ export default async function PropertyDetail({
 
           {/* Location & Agent Section */}
           <section className="my-20 border-t border-stone-100 pt-20">
-             <div className="flex flex-col md:flex-row justify-between gap-12 mb-12">
-                <div className="flex-1">
-                  <span className="text-[10px] uppercase tracking-[0.5em] text-stone-400 block mb-4">Location</span>
-                  <h3 className="text-3xl font-serif mb-2">{property.location?.name}</h3>
-                  <div className="flex items-center gap-4">
-                    <span className="text-stone-500 text-sm">{property.location?.city}</span>
-                    <MapButton address={`${property.location?.name}, ${property.location?.city}`} name={property.title} />
-                  </div>
+            <div className="flex flex-col md:flex-row justify-between gap-12 mb-12">
+              <div className="flex-1">
+                <span className="text-[10px] uppercase tracking-[0.5em] text-stone-400 block mb-4">Location</span>
+                <h3 className="text-3xl font-serif mb-2">{property.location?.name}</h3>
+                <div className="flex items-center gap-4">
+                  <span className="text-stone-500 text-sm">{property.location?.city}</span>
+                  <MapButton address={`${property.location?.name}, ${property.location?.city}`} name={property.title} />
                 </div>
+              </div>
 
-                {agent && (
-                  <div className="flex-1 bg-white p-6 border border-stone-100 shadow-sm flex items-start gap-4">
-                    <AgentAvatar src={agent.image_url} name={agent.name} />
-                    <div className="space-y-1">
-                      <p className="text-[10px] text-stone-400 uppercase tracking-widest">Listing Agent</p>
-                      <p className="font-serif text-xl text-luxury-charcoal">{agent.name}</p>
-                      <p className="text-xs text-stone-500 pb-3">{agent.role}</p>
-                      <div className="flex gap-4 pt-2 border-t border-stone-50">
-                        <a href={`mailto:${agent.email}`} className="text-[9px] uppercase tracking-tighter border-b border-black font-bold">Email</a>
-                        <a href={`https://wa.me/${agent.whatsapp_number}`} className="text-[9px] uppercase tracking-tighter border-b border-black font-bold">WhatsApp</a>
-                      </div>
+              {agent && (
+                <div className="flex-1 bg-white p-6 border border-stone-100 shadow-sm flex items-start gap-4">
+                  <AgentAvatar src={agent.image_url} name={agent.name} />
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-stone-400 uppercase tracking-widest">Listing Agent</p>
+                    <p className="font-serif text-xl text-luxury-charcoal">{agent.name}</p>
+                    <p className="text-xs text-stone-500 pb-3">{agent.role}</p>
+                    <div className="flex gap-4 pt-2 border-t border-stone-50">
+                      <a href={`mailto:${agent.email}`} className="text-[9px] uppercase tracking-tighter border-b border-black font-bold">Email</a>
+                      <a href={`https://wa.me/${agent.whatsapp_number}`} className="text-[9px] uppercase tracking-tighter border-b border-black font-bold">WhatsApp</a>
                     </div>
                   </div>
-                )}
-             </div>
+                </div>
+              )}
+            </div>
 
-             <PropertyMap 
-                locationName={property.location?.name} 
-                city={property.location?.city} 
-             />
+            <PropertyMap
+              locationName={property.location?.name}
+              city={property.location?.city}
+            />
           </section>
         </div>
 
@@ -160,15 +160,15 @@ export default async function PropertyDetail({
         <aside className="lg:col-span-4">
           <div className="sticky top-32 p-10 bg-white border border-stone-100 shadow-2xl">
             <span className="text-[9px] uppercase tracking-[0.4em] text-stone-400 mb-6 block">Private Treaty</span>
-            <h4 className="font-serif text-3xl mb-8">Request <br/>A Viewing</h4>
+            <h4 className="font-serif text-3xl mb-8">Request <br />A Viewing</h4>
             <InquiryForm propertyId={property.id} propertyName={property.title} />
           </div>
         </aside>
       </div>
 
       <SimilarListings properties={similarProperties} />
-      <PropertyNavigation prevSlug={prevSlug} nextSlug={nextSlug} />
-      <Footer />   
+      <PropertyNavigation prevProp={prevProp} nextProp={nextProp} />
+      <Footer />
     </main>
   );
 }

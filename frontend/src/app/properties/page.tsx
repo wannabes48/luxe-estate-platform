@@ -1,21 +1,19 @@
 import { Suspense } from 'react';
 import { getProperties } from "@/lib/api";
-import { PropertyCard } from "@/components/PropertyCard";
 import PropertyGrid from '@/components/listings/PropertyGrid';
 import FilterBar from '@/components/listings/FilterBar';
 import Footer from "@/components/Footer";
 import GridSkeleton from '@/components/ui/GridSkeleton';
 import ReturnNavBar from "@/components/ReturnNavBar";
 
-export default async function ListingsPage({
-  searchParams
+export default async function ListingsPage({ searchParams
 }: {
-  searchParams: Promise<{ 
-    location?: string; 
-    view?: string; 
-    min_price?: string; 
-    max_price?: string; 
-    beds?: string 
+  searchParams: Promise<{
+    location?: string;
+    view?: string;
+    min_price?: string;
+    max_price?: string;
+    beds?: string
   }>
 }) {
   // 1. Await the searchParams Promise (Crucial for Next.js 15)
@@ -29,6 +27,17 @@ export default async function ListingsPage({
     bedrooms: resolvedParams.beds,
     view: (resolvedParams.view as 'grid' | 'list') || 'grid',
   };
+
+  const properties = await getProperties(filters);
+
+  console.log("DEBUG: Filters applied:", filters);
+  console.log("DEBUG: Property count:", properties?.length);
+  if (properties?.length > 0) {
+    properties.forEach((p: any) => {
+      console.log(`Prop: ${p.title} | Loc: ${p.location?.name} | Img:`, JSON.stringify(p.images));
+      console.log(`Image URL candidate:`, p.images?.[0]?.url || p.images?.[0]?.image_path || p.property_images?.[0]?.url);
+    });
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -51,7 +60,10 @@ export default async function ListingsPage({
 
         {/* Using the stringified params as a key forces Suspense to trigger on change */}
         <Suspense key={JSON.stringify(resolvedParams)} fallback={<GridSkeleton />}>
-          <PropertyGrid filters={filters} />
+          <PropertyGrid
+            properties={properties}
+            view={(resolvedParams.view as 'grid' | 'list') || 'grid'}
+            filters={filters} />
         </Suspense>
       </div>
       <Footer />

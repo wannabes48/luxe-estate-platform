@@ -1,56 +1,55 @@
 import React from 'react'
 import { PropertyCard } from '@/components/PropertyCard'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabaseClient' // Import your existing client
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-// If these are missing during the Vercel build, the fetch will fail
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Missing Supabase Env Variables. Check Vercel Settings.")
+// Define the Props interface to accept either filters or direct properties
+interface PropertyGridProps {
+  filters: any;
+  properties?: any[];
+  view?: 'grid' | 'list';
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
-
-// Define a type for the properties to improve DX
-interface Property {
-  id: string | number;
-  title: string;
-  // ... add other fields as needed
-}
-
-async function getProperties(filters: any) {
-  // Use a single source for the URL. 
-  // For Server Components, process.env.API_URL is preferred.
-  
-  // Clean filters: Remove empty strings, nulls, or undefined values
-  const cleanFilters = Object.entries(filters).reduce((acc: any, [k, v]) => {
-    if (v !== undefined && v !== null && v !== '') acc[k] = String(v);
-    return acc;
-  }, {});
-
-  const query = new URLSearchParams(cleanFilters).toString();
-
+async function fetchSupabaseProperties(filters: any) {
   try {
-    const res = await fetch(`${supabaseUrl}/api/properties/?${query}`, {
-      next: { revalidate: 3600 },
-    });
+    // 1. Start the query on the 'properties' table
+    let query = supabase
+      .from('properties')
+      .select(`
+        *,
+        location:locations(name, city),
+        images:property_images(*)
+      `);
 
-    if (!res.ok) return [];
-    const data = await res.json();
-    // Handle both paginated and non-paginated DRF responses
-    return data.results || data; 
+    // 2. Apply Filters (Mapping your filter names to DB columns)
+    if (filters.location && filters.location !== 'all') {
+      query = query.ilike('location.name', `%${filters.location}%`);
+    }
+    if (filters.price_min) {
+      query = query.gte('price', parseInt(filters.price_min));
+    }
+    if (filters.price_max) {
+      query = query.lte('price', parseInt(filters.price_max));
+    }
+    if (filters.bedrooms && filters.bedrooms !== 'any') {
+      query = query.gte('bedrooms', parseInt(filters.bedrooms));
+    }
+
+    // 3. Execute query
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("Supabase fetch failed:", error);
     return [];
   }
 }
 
-export default async function PropertyGrid({ filters }: { filters: any }) {
-  const data = await getProperties(filters);
-  const properties = Array.isArray(data) ? data : (data?.results || []);
+export default async function PropertyGrid({ filters={}, properties: initialProperties, view = 'grid' }: PropertyGridProps) {
+  // Use properties passed from parent, or fetch them here using our new logic
+  const properties = initialProperties || await fetchSupabaseProperties(filters);
 
-  if (properties.length === 0) {
+  if (!properties || properties.length === 0) {
     return (
       <div className="py-20 text-center">
         <p className="font-serif text-2xl text-stone-400">No properties found in this collection.</p>
@@ -61,14 +60,14 @@ export default async function PropertyGrid({ filters }: { filters: any }) {
   return (
     <div
       className={
-        filters.view === 'grid'
-          ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12' // Editorial grid spacing
-          : 'flex flex-col gap-24' // Editorial list spacing
+        view === 'grid'
+          ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12'
+          : 'flex flex-col gap-24'
       }
     >
-      {properties.map((property: any) => (
+      {properties.map((property: any, index: number) => (
         <PropertyCard 
-          key={property.id} 
+          key={property.id || `prop-${property.slug}-${index}`} 
           property={property}
         />
       ))}

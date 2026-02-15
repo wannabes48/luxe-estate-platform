@@ -26,3 +26,5 @@ export const PageWrapper = ({ children, pathname }: { children: React.ReactNode;
 )
 
 export default PageWrapper
+
+

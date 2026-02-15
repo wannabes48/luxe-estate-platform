@@ -1,7 +1,6 @@
 "use client"
 import React, { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabaseClient'
 
 interface InquiryFormProps {
   propertyId: string;
@@ -22,53 +21,49 @@ export default function InquiryForm({ propertyId, propertyName }: InquiryFormPro
     }
 
     setIsSubmitting(true);
-    
+
     // 1. Extract data from the form
     const form = e.currentTarget;
     const formData = new FormData(form);
-    
-    // 2. Map the data to match your Supabase schema exactly
+
+    // 2. Prepare payload for API
     const submission = {
       property_id: propertyId,
-      full_name: formData.get('name'), // Matches your input name="name"
+      full_name: formData.get('name'),
       email: formData.get('email'),
       message: formData.get('message'),
       phone: formData.get('phone'),
+      property_name: propertyName // Pass property name for email context
     };
 
-    console.log("Supabase Payload:", submission);
-
     try {
-      // 3. Database Persistence (The Record)
-      const { error: dbError } = await supabase
-        .from('inquiries')
-        .insert([submission]); // Must be an array of objects
-
-      if (dbError) throw dbError;
-
-      console.log("SUCCESSFULLY LOGGED TO DB", submission);
-
-      // 4. Trigger Email Notification (The Communication)
-      // We don't 'await' this strictly so the user gets a success UI instantly
-      await fetch('/api/send-email', {
+      // 3. Submit to Server-Side API (Bypasses RLS)
+      const response = await fetch('/api/inquire', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...submission,
-          property_name: propertyName || "Luxury Listing"
-        })
-      }).catch(err => console.error("Email notification failed:", err));
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submission),
+      });
 
-      // 5. Success State
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Submission failed');
+      }
+
+      console.log("SUCCESSFULLY SUBMITTED VIA API", result);
+
+      // 4. Success State
       setIsSuccess(true);
       formRef.current?.reset();
-      
+
       // Reset success message after 5 seconds
       setTimeout(() => setIsSuccess(false), 5000);
 
     } catch (err: any) {
       console.error("Submission Error:", err.message);
-      alert("Failed to send inquiry. Please check your connection: " + err.message);
+      alert("Failed to send inquiry: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +86,7 @@ export default function InquiryForm({ propertyId, propertyName }: InquiryFormPro
               <label className="text-[10px] uppercase tracking-widest text-stone-500">Full Name</label>
               <input name="name" type="text" className="w-full border-b border-stone-300 py-2 focus:border-[#D4AF37] outline-none bg-transparent" required />
             </div>
-            
+
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-widest text-stone-500">Email Address</label>
               <input name="email" type="email" className="w-full border-b border-stone-300 py-2 focus:border-[#D4AF37] outline-none bg-transparent" required />
@@ -107,8 +102,8 @@ export default function InquiryForm({ propertyId, propertyName }: InquiryFormPro
               <textarea name="message" rows={4} className="w-full border-b border-stone-300 py-2 focus:border-[#D4AF37] outline-none resize-none bg-transparent" placeholder={`I am interested in ${propertyName || 'this property'}...`} required />
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isSubmitting}
               className="w-full py-4 bg-[#0D0D0D] text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-[#D4AF37] transition-all duration-500 disabled:opacity-50"
             >
@@ -123,7 +118,7 @@ export default function InquiryForm({ propertyId, propertyName }: InquiryFormPro
             className="flex flex-col items-center justify-center py-20 text-center"
           >
             <div className="w-16 h-16 bg-[#D4AF37]/10 rounded-full flex items-center justify-center mb-6">
-              <motion.svg 
+              <motion.svg
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.8 }}
@@ -136,7 +131,7 @@ export default function InquiryForm({ propertyId, propertyName }: InquiryFormPro
             <p className="text-stone-500 text-sm leading-relaxed">
               Your inquiry has been logged. <br /> Our concierge will contact you shortly.
             </p>
-            <button 
+            <button
               onClick={() => setIsSuccess(false)}
               className="mt-8 text-[10px] uppercase tracking-widest text-stone-400 hover:text-[#0D0D0D] underline underline-offset-8"
             >
