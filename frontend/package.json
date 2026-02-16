@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@next/third-parties": "^16.1.6",
     "@supabase/supabase-js": "^2.93.3",
     "clsx": "^2.1.1",
     "framer-motion": "^12.31.0",
