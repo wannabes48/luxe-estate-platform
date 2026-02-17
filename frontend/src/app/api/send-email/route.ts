@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-    const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
     console.error("Missing RESEND_API_KEY");
@@ -13,11 +13,12 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+    console.log("Email API Received Body:", body);
     const { full_name, email, message, property_name } = body;
 
     const { data, error } = await resend.emails.send({
       from: 'Luxe Estate <onboarding@resend.dev>', // Use your verified domain in production
-      to: ['sirodaniel48@gmail.com'], // Where you want to receive the lead
+      to: ['wannabedaniel77@gmail.com'], // Where you want to receive the lead
       subject: `New Inquiry: ${property_name || "General Contact"}`,
       html: `
         <h2>New Property Inquiry</h2>
@@ -29,7 +30,10 @@ export async function POST(request: Request) {
       `,
     });
 
-    if (error) return NextResponse.json({ error }, { status: 400 });
+    if (error) {
+      console.error("Resend API Error:", error);
+      return NextResponse.json({ error }, { status: 400 });
+    }
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {

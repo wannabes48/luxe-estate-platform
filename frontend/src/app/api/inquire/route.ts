@@ -17,7 +17,7 @@ export async function POST(request: Request) {
             const { data: property } = await supabaseAdmin
                 .from('properties')
                 .select('agent_id')
-                .eq('id', property_id)
+                .eq('property_id', property_id) // Corrected column name
                 .single();
 
             if (property) {
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
                     email,
                     message,
                     phone,
-                    status: 'new'
+                    status: ['new'] // Passed as array to satisfy DB schema
                 }
             ])
             .select()
