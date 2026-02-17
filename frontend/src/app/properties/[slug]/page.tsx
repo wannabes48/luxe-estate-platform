@@ -19,6 +19,8 @@ import MapButton from "@/components/MapButton";
 import { Metadata } from 'next';
 import AgentAvatar from "@/components/AgentAvatar";
 
+import { incrementPropertyView } from "@/app/actions";
+
 export default async function PropertyDetail({
   params
 }: {
@@ -40,14 +42,12 @@ export default async function PropertyDetail({
     );
   }
 
-  const similarProperties = await getSimilarProperties(property.slug);
+  // Increment Views (Fire and forget, or await)
+  await incrementPropertyView(property.id || property.property_id);
 
-  // 2. Fetch associated data in parallel using the correct identifiers (UUIDs)
-  const [similar] = await Promise.all([
-    getSimilarProperties(property.slug),
-    getNextPropertySlug(property.slug),
-    getPreviousPropertySlug(property.slug)
-  ]);
+  const similarProperties = await getSimilarProperties(property.id || property.property_id);
+
+
 
   const { nextProp, prevProp } = await getAdjacentProperties(property.slug);
 
@@ -135,7 +135,7 @@ export default async function PropertyDetail({
 
               {agent && (
                 <div className="flex-1 bg-white p-6 border border-stone-100 shadow-sm flex items-start gap-4">
-                  <AgentAvatar src={agent.image_url} name={agent.name} />
+                  <AgentAvatar src={agent.image_url} name={agent.name} isVerified={agent.is_verified} />
                   <div className="space-y-1">
                     <p className="text-[10px] text-stone-400 uppercase tracking-widest">Listing Agent</p>
                     <p className="font-serif text-xl text-luxury-charcoal">{agent.name}</p>
@@ -161,7 +161,7 @@ export default async function PropertyDetail({
           <div className="sticky top-32 p-10 bg-white border border-stone-100 shadow-2xl">
             <span className="text-[9px] uppercase tracking-[0.4em] text-stone-400 mb-6 block">Private Treaty</span>
             <h4 className="font-serif text-3xl mb-8">Request <br />A Viewing</h4>
-            <InquiryForm propertyId={property.id} propertyName={property.title} />
+            <InquiryForm propertyId={property.id || property.property_id} propertyName={property.title} />
           </div>
         </aside>
       </div>

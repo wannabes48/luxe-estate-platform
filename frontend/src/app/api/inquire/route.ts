@@ -11,16 +11,32 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        // 2. Insert into Supabase using Admin Client (Bypassing RLS)
+        // 2. Resolve Agent ID (Monetization: Lead Assignment)
+        let agent_id = null;
+        if (property_id) {
+            const { data: property } = await supabaseAdmin
+                .from('properties')
+                .select('agent_id')
+                .eq('id', property_id)
+                .single();
+
+            if (property) {
+                agent_id = property.agent_id;
+            }
+        }
+
+        // 3. Insert into Supabase using Admin Client (Bypassing RLS)
         const { data, error: dbError } = await supabaseAdmin
             .from('inquiries')
             .insert([
                 {
                     property_id,
+                    agent_id, // Link the lead to the agent
                     full_name,
                     email,
                     message,
                     phone,
+                    status: 'new'
                 }
             ])
             .select()

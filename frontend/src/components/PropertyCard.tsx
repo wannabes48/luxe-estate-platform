@@ -54,8 +54,15 @@ export function PropertyCard({ property }: { property: any }) {
                 No Image Available
               </div>
             )}
-            <div className="absolute top-6 left-6 bg-[#E91E63] text-white text-[10px] font-bold px-4 py-1.5 uppercase tracking-widest z-10">
-              {property.is_featured ? 'Featured' : 'Exclusive'}
+            <div className="absolute top-6 left-6 flex flex-col gap-2 z-10">
+              {property.is_boosted && (
+                <div className="bg-[#D4AF37] text-black text-[10px] font-bold px-4 py-1.5 uppercase tracking-widest shadow-md">
+                  Promoted
+                </div>
+              )}
+              <div className="bg-[#E91E63] text-white text-[10px] font-bold px-4 py-1.5 uppercase tracking-widest w-fit">
+                {property.is_featured ? 'Featured' : 'Exclusive'}
+              </div>
             </div>
           </div>
 

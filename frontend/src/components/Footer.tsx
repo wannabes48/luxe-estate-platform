@@ -1,13 +1,13 @@
 /* src/components/Footer.tsx */
 import React from 'react';
 import Link from 'next/link';
-import { Mail, Phone, Twitter, Youtube, Instagram } from 'lucide-react';
+import { Mail, Phone, X, Youtube, Instagram } from 'lucide-react';
 
 export default function Footer() {
   return (
     <footer className="bg-[#1A1A1A] text-white pt-20 pb-10 px-6 md:px-12 border-t border-white/5">
       <div className="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
-        
+
         {/* Brand & Newsletter */}
         <div className="space-y-8">
           <Link href="/">
@@ -16,9 +16,9 @@ export default function Footer() {
           <div className="space-y-4">
             <p className="text-[10px] uppercase tracking-widest text-stone-400">Stay up to date</p>
             <form className="flex border-b border-stone-700 pb-2">
-              <input 
-                type="email" 
-                placeholder="Email Address" 
+              <input
+                type="email"
+                placeholder="Email Address"
                 className="bg-transparent outline-none text-sm w-full font-light"
                 required
               />
@@ -34,7 +34,7 @@ export default function Footer() {
             <li><Link href="/agents" className="hover:text-white transition-colors">The Team</Link></li>
             <li><Link href="/blog" className="hover:text-white transition-colors">Journal</Link></li>
             <li><Link href="/contact" className="hover:text-white transition-colors">List Your Property</Link></li>
-            <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
+            <li><Link href="/agent/login" className="hover:text-[#E91E63] transition-colors">Agent Portal</Link></li>
           </ul>
         </div>
 
@@ -72,7 +72,7 @@ export default function Footer() {
         </div>
 
         <div className="flex gap-8 text-stone-400">
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#E91E63] transition-colors"><Twitter size={18} /></a>
+          <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#E91E63] transition-colors"><X size={18} /></a>
           <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#E91E63] transition-colors"><Youtube size={18} /></a>
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#E91E63] transition-colors"><Instagram size={18} /></a>
         </div>

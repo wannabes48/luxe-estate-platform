@@ -32,16 +32,28 @@ export async function getPropertyBySlug(slug: string) {
  * It finds properties in the same location but excludes the current one.
  */
 export async function getSimilarProperties(propertyId: string) {
+  console.log(`[Similar] Fetching for ID: ${propertyId}`);
   if (!propertyId) return [];
 
-  // Get the location_id of the current property first
-  const { data: currentProp } = await supabase
+  // Get the location_id and price of the current property first
+  const { data: currentProp, error: currError } = await supabase
     .from('properties')
-    .select('location_id')
-    .eq('id', propertyId)
+    .select('location_id, price')
+    .eq('property_id', propertyId)
     .maybeSingle();
 
+  if (currError) console.error("[Similar] Error fetching current prop:", currError);
+  if (!currentProp) {
+    console.log("[Similar] Current property not found (or no access).");
+    return [];
+  }
+
+  console.log(`[Similar] Found current prop: loc=${currentProp.location_id}, price=${currentProp.price}`);
+
   if (!currentProp?.location_id) return [];
+
+  const minPrice = currentProp.price * 0.8;
+  const maxPrice = currentProp.price * 1.2;
 
   const { data, error } = await supabase
     .from('properties')
@@ -51,13 +63,53 @@ export async function getSimilarProperties(propertyId: string) {
       images:property_images(*)
     `)
     .eq('location_id', currentProp.location_id)
-    .neq('id', propertyId) // Don't show the current property
+    .neq('property_id', propertyId) // Don't show the current property
+    .gte('price', minPrice)
+    .lte('price', maxPrice)
     .limit(4);
 
-  if (error) {
-    console.error("Error fetching similar properties:", error.message);
-    return [];
+  if (error) console.error("[Similar] Strict query error:", error.message);
+  console.log(`[Similar] Strict query found: ${data?.length || 0}`);
+
+  // Fallback: If no properties found with price filter, try location only
+  if (!data || data.length === 0) {
+    console.log("[Similar] Trying Location-Only Fallback...");
+    const { data: locationOnlyData, error: locationError } = await supabase
+      .from('properties')
+      .select(`
+        *,
+        location:locations(name, city),
+        images:property_images(*)
+      `)
+      .eq('location_id', currentProp.location_id)
+      .neq('property_id', propertyId)
+      .limit(4);
+
+    if (locationError) console.error("[Similar] Location query error:", locationError.message);
+    console.log(`[Similar] Location query found: ${locationOnlyData?.length || 0}`);
+
+    // Second Fallback: If still no properties (e.g. only 1 property in that location), show standard recommendations
+    if (!locationOnlyData || locationOnlyData.length === 0) {
+      console.log("[Similar] Trying Global Fallback...");
+      const { data: globalData, error: globalError } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          location:locations(name, city),
+          images:property_images(*)
+        `)
+        .neq('property_id', propertyId)
+        .order('property_id', { ascending: false }) // Simplest possible sort
+        .limit(4);
+
+      if (globalError) console.error("[Similar] Global query error:", globalError.message);
+      console.log(`[Similar] Global query found: ${globalData?.length || 0}`);
+      return globalData || [];
+    }
+
+    return locationOnlyData;
   }
+
   return data;
 }
 
@@ -152,7 +204,10 @@ export async function getProperties(filters: any = {}) {
       query = query.or(`name.ilike.%${filters.location}%,city.ilike.%${filters.location}%`, { foreignTable: 'locations' });
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query
+      .order('is_boosted', { ascending: false })
+      .order('ranking_score', { ascending: false })
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error("Supabase Query Error:", JSON.stringify(error, null, 2));
@@ -173,7 +228,9 @@ export async function getAdjacentProperties(slug: string) {
   // Fetch all properties (lightweight: slug, title, created_at) to determine order
   const { data, error } = await supabase
     .from('properties')
-    .select('slug, title, created_at')
+    .select('slug, title, created_at, is_boosted, ranking_score')
+    .order('is_boosted', { ascending: false })
+    .order('ranking_score', { ascending: false })
     .order('created_at', { ascending: false });
 
   if (error || !data) return { nextProp: null, prevProp: null };
@@ -220,7 +277,27 @@ export async function getAgents() {
 }
 
 /**
- * 9. Submit Inquiry
+ * 9. Fetch Agent's Properties
+ */
+export async function getAgentProperties(agentId: string) {
+  if (!agentId) return [];
+
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*, images:property_images(*), location:locations(*)')
+    .eq('agent_id', agentId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error("Error fetching agent properties:", error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * 10. Submit Inquiry
  */
 export async function sendInquiry(inquiryData: any) {
   const { data, error } = await supabase
