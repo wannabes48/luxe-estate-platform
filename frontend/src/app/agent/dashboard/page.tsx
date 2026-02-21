@@ -208,7 +208,7 @@ export default function AgentDashboard() {
                             <a href={`/agents/${agent?.id}`} target="_blank" className="text-xs text-[#E91E63] underline">View Public Profile</a>
                         </div>
                         <div className="flex flex-col items-center gap-2">
-                            <div className="bg-white p-2">
+                            <div className="bg-white p-2 border border-stone-100 rounded-lg shadow-sm">
                                 <QRCodeCanvas
                                     id="agent-qr"
                                     value={`https://luxe-estate-platform.vercel.app/agents/${agent?.id}`}
@@ -216,7 +216,7 @@ export default function AgentDashboard() {
                                     level={"H"}
                                     includeMargin={true}
                                     imageSettings={{
-                                        src: "/logo-black.png", // Path to your company logo in the public folder
+                                        src: "/favicon.png", // Path to your company logo in the public folder
                                         x: undefined, // Centers automatically
                                         y: undefined, // Centers automatically
                                         height: 50,
