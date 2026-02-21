@@ -214,6 +214,15 @@ export default function AgentDashboard() {
                                     value={`https://luxe-estate-platform.vercel.app/agents/${agent?.id}`}
                                     size={100}
                                     level={"H"}
+                                    includeMargin={true}
+                                    imageSettings={{
+                                        src: "/logo-black.png", // Path to your company logo in the public folder
+                                        x: undefined, // Centers automatically
+                                        y: undefined, // Centers automatically
+                                        height: 50,
+                                        width: 50,
+                                        excavate: true, // This clears the QR pixels behind the logo
+                                    }}
                                 />
                             </div>
                             <button
