@@ -10,7 +10,7 @@ import { getProperties } from "@/lib/api";
 export default async function Home() {
   const properties = await getProperties();
   return (
-    <main className="bg-white min-h-screen w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main className="bg-white min-h-screen">
       <NavBar />
       <Hero />
       <EditorialStory
