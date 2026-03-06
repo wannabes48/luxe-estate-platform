@@ -13,6 +13,7 @@ export default function NavBar() {
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 mix-blend-difference md:mix-blend-normal">
+        <meta name="google-site-verification" content="yCWkx_g_st56DQ35eL4It-2tnZCBCN7bC-pB6aNyRgM" />
       <div className="max-w-[1440px] mx-auto flex items-center justify-between py-8 px-10">
         <Link href="/" className="text-3xl font-bold text-white tracking-tighter">LUXE PROPERTIES</Link>
 
