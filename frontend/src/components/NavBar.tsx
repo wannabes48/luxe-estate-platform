@@ -17,7 +17,7 @@ export default function NavBar() {
       <div className="max-w-[1440px] mx-auto flex items-center justify-between py-8 px-10">
         <Link href="/" className="text-3xl font-bold text-white tracking-tighter">LUXE PROPERTIES</Link>
 
-        <nav className="hidden lg:flex gap-12 text-[10px] uppercase tracking-[0.4em] text-white/70">
+        <nav className="hidden lg:!flex gap-12 text-[10px] uppercase tracking-[0.4em] text-white/70">
           {navItems.map((item) => (
             <Link key={item.name} href={item.path} className="hover:text-white transition-colors duration-500">
               {item.name}
