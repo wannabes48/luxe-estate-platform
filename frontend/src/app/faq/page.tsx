@@ -14,6 +14,58 @@ const faqs = [
   {
     question: "What are the costs associated with selling?",
     answer: "Our commission structures are competitive and reflect the premium marketing, professional cinematography, and global reach we provide for every listing."
+  },
+  {
+    question: "What is Luxe Estate?",
+    answer: "Luxe Estate is a premium PropTech platform specializing in modernist architectural homes in Kisii and Nyamira, Kenya. We connect high-end buyers with verified agents."
+  },
+  {
+    question: "Is Luxe Estate a traditional agency?",
+    answer: "No, we are a technology platform that provides digital tools for agents and a curated marketplace for architectural gems."
+  },
+
+  // Locations & Inventory
+  {
+    question: "Where are the properties located?",
+    answer: "Our inventory focuses on upscale neighborhoods in Kisii town (like Milimani), Nyamira, and surrounding luxury corridors in Western Kenya."
+  },
+  {
+    question: "What kind of properties do you list?",
+    answer: "We exclusively feature modernist, contemporary, and high-end architectural designs that meet our luxury aesthetic standards."
+  },
+
+  // Agent Portal & Monetization
+  {
+    question: "How do I join the Agent Portal?",
+    answer: "Qualified agents can register at /agent/login. Once verified, you can manage inventory and view lead analytics."
+  },
+  {
+    question: "What is the Professional Tier?",
+    answer: "The Pro Tier offers verified badges, featured listing placement (boosting), and unblurred lead contact information for a monthly fee."
+  },
+  {
+    question: "Can I boost my property listing?",
+    answer: "Yes! Professional tier agents can 'Boost' listings to keep them at the top of the Architectural Inventory grid."
+  },
+
+  // Services & Operations
+  {
+    question: "Do you offer property maintenance?",
+    answer: "Yes, we provide professional move-in cleaning and routine maintenance services for properties listed on our platform."
+  },
+  {
+    question: "How do viewings work?",
+    answer: "Click the 'Contact Agent' button on any property page to schedule a viewing. We support both physical walkthroughs and virtual tours."
+  },
+  {
+    question: "Is there a fee for buyers?",
+    answer: "Luxe Estate is free for buyers to browse. Fees only apply to agents for premium features and listing services."
+  },
+
+  // Trust & Security
+  {
+    question: "Are the agents verified?",
+    answer: "Agents with a gold checkmark are part of our Professional Tier and have undergone a verification process to ensure trust and reliability."
   }
 ];
 
