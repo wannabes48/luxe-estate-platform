@@ -37,7 +37,7 @@ export default function RootLayout({
           window.CHATBOT_TITLE = 'Luxe Assistant';
           window.CHATBOT_GREETING = 'Welcome to Luxe Estate. How can I help you find your dream home today?';
         </script>
-        <script src="https://luxe-ai-chatbot-widget.wannabes48.workers.dev//widget.js"></script>
+        <script src="https://luxe-ai-chatbot-widget.wannabes48.workers.dev/widget.js"></script>
       </body>
     </html>
   );
