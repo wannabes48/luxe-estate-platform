@@ -11,6 +11,7 @@ export default function Hero() {
 
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-black">
+      <meta name="google-site-verification" content="yCWkx_g_st56DQ35eL4It-2tnZCBCN7bC-pB6aNyRgM" />
       <NavBar />
       
       <div className="absolute inset-0 z-0">
