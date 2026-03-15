@@ -1,7 +1,10 @@
 /* src/components/NavBar.tsx */
 "use client"
 import React from 'react'
-import Link from 'next/link'
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function NavBar() {
     const navItems = [
@@ -9,7 +12,20 @@ export default function NavBar() {
     { name: 'Contact', path: '/contact' },
     { name: 'Agents', path: '/agents' },
     { name: 'Blog', path: '/blog' },
+    { name: 'Marketplace', path: '/properties' },
+    { name: 'How It Works', path: '/how-it-works' },
   ];
+    const [user, setUser] = useState<any>(null);
+    const pathname = usePathname();
+
+    useEffect(() => {
+      supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    
+      const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+        setUser(session?.user ?? null);
+      });
+      return () => authListener.subscription.unsubscribe();
+    }, []);
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 mix-blend-difference md:mix-blend-normal">
