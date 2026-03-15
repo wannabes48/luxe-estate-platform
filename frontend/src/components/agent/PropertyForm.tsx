@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { supabase } from '@/lib/supabaseClient'
 import { CldUploadWidget } from 'next-cloudinary'
@@ -19,21 +19,16 @@ interface PropertyFormData {
     eco_features: string[] 
 }
 
-const ECO_FEATURE_OPTIONS = [
-    { id: 'solar_panel', label: 'Solar Power System' },
-    { id: 'water_harvesting', label: 'Rainwater Harvesting' },
-    { id: 'borehole', label: 'Private Borehole' },
-    { id: 'biogas', label: 'Biogas Digester' },
-    { id: 'smart_meter', label: 'Smart Energy Meters' },
-    { id: 'natural_lighting', label: 'Optimized Natural Lighting' },
-    { id: 'eco_materials', label: 'Sustainable Building Materials' }
-]
+
+
+
 
 export default function PropertyForm({ agentId, initialData }: { agentId: string, initialData?: any }) {
     const router = useRouter()
     const [images, setImages] = useState<string[]>(initialData?.images?.map((img: any) => img.image_url) || [])
     const [loading, setLoading] = useState(false)
     const [selectedEco, setSelectedEco] = useState<string[]>(initialData?.eco_features || []);
+    const [featuresList, setFeaturesList] = useState<{id: string, label: string}[]>([]);
     
     // 1. Added setValue to the useForm destructuring
     const { register, handleSubmit, setValue, formState: { errors } } = useForm<PropertyFormData>({
@@ -53,6 +48,14 @@ export default function PropertyForm({ agentId, initialData }: { agentId: string
         }
     })
 
+    useEffect(() => {
+        async function loadMasterList() {
+            const { data } = await supabase.from('eco_master_list').select('id, label');
+            if (data) setFeaturesList(data);
+        }
+        loadMasterList();
+    }, []);
+
     // 2. Sync logic for the custom Multi-select dropdown
     const toggleFeature = (id: string) => {
         const updated = selectedEco.includes(id)
@@ -69,10 +72,11 @@ export default function PropertyForm({ agentId, initialData }: { agentId: string
         setLoading(true)
 
         const finalEcoFeatures = selectedEco || []; 
+        
         const finalGreenScore = calculateGreenScore(finalEcoFeatures);
 
         console.log("FINAL PAYLOAD ECO:", finalEcoFeatures);
-        
+
         try {
             // Location Logic
             let location_id;
@@ -95,10 +99,6 @@ export default function PropertyForm({ agentId, initialData }: { agentId: string
                 location_id = newLoc.id
             }
 
-            // Green Score Calculation
-            const selectedEcoFeatures = data.eco_features || []; 
-            const greenScore = calculateGreenScore(selectedEcoFeatures);
-
             // Prepare Payload
             const propertyPayload = {
                 title: data.title,
@@ -110,8 +110,8 @@ export default function PropertyForm({ agentId, initialData }: { agentId: string
                 sq_ft: data.sq_ft, // Fixed mapping
                 location_id,
                 agent_id: agentId,
-                eco_features: selectedEcoFeatures, 
-                green_score: greenScore            
+                eco_features: finalEcoFeatures, 
+                green_score: finalGreenScore            
             }
 
             let currentPropertyId = initialData?.property_id || initialData?.id;
@@ -136,17 +136,41 @@ export default function PropertyForm({ agentId, initialData }: { agentId: string
 
             // Image Sync Strategy
             if (currentPropertyId) {
-                await supabase.from('property_images').delete().eq('property_id', currentPropertyId)
-                if (images.length > 0) {
-                    const imageInserts = images.map((url, index) => ({
+                // 1. Fetch current images from the DB for this property
+                const { data: existingImages } = await supabase
+                    .from('property_images')
+                    .select('image_url')
+                    .eq('property_id', currentPropertyId);
+
+                const existingUrls = existingImages?.map(img => img.image_url) || [];
+
+                // 2. Identify images to DELETE (In DB but not in our current state)
+                const urlsToDelete = existingUrls.filter(url => !images.includes(url));
+    
+                if (urlsToDelete.length > 0) {
+                    await supabase
+                        .from('property_images')
+                        .delete()
+                        .eq('property_id', currentPropertyId)
+                        .in('image_url', urlsToDelete);
+                }
+
+                // 3. Identify images to INSERT (In our current state but not in DB)
+                const urlsToInsert = images.filter(url => !existingUrls.includes(url));
+
+                if (urlsToInsert.length > 0) {
+                    const imageInserts = urlsToInsert.map((url, index) => ({
                         property_id: currentPropertyId,
-                        image_url: url,
-                        caption: `${data.title} - Image ${index + 1}`,
-                        is_cover: index === 0,
-                        display_order: index
-                    }))
-                    const { error: imgError } = await supabase.from('property_images').insert(imageInserts)
-                    if (imgError) throw imgError
+                        image_url: url, // These are the Cloudinary URLs from CldUploadWidget
+                        caption: `${data.title} - Image`,
+                        display_order: existingUrls.length + index 
+                    }));
+
+                    const { error: imgError } = await supabase
+                        .from('property_images')
+                        .insert(imageInserts);
+
+                    if (imgError) throw imgError;
                 }
             }
 
@@ -212,45 +236,21 @@ export default function PropertyForm({ agentId, initialData }: { agentId: string
                 </div>
             </div>
 
-            {/* --- CUSTOM MULTI-SELECT DROPDOWN --- */}
-            <div className="space-y-4 p-6 bg-[#FAFAFA] border border-stone-200">
-                <div className="border-b border-stone-200 pb-2">
-                    <h4 className="font-serif text-lg text-stone-900">Sustainability Profile</h4>
-                    <p className="text-[10px] uppercase tracking-widest text-stone-400 mt-1">Select all eco-friendly features available</p>
-                </div>
-                
-                <div className="space-y-4">
-                    {/* Selected "Pills" */}
-                    <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-white border border-stone-100 rounded-lg">
-                        {selectedEco.length === 0 && <span className="text-stone-300 text-xs italic p-1">No features selected yet...</span>}
-                        {selectedEco.map(id => (
-                            <div key={id} className="bg-emerald-600 text-white text-[10px] px-3 py-1.5 rounded-full flex items-center gap-2 animate-in fade-in zoom-in duration-200">
-                                {ECO_FEATURE_OPTIONS.find(o => o.id === id)?.label}
-                                <button type="button" onClick={() => toggleFeature(id)} className="hover:text-black font-bold">×</button>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Selection Dropdown Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {ECO_FEATURE_OPTIONS.map((feature) => (
-                            <button
-                                key={feature.id}
-                                type="button"
-                                onClick={() => toggleFeature(feature.id)}
-                                className={`text-left px-4 py-3 text-xs tracking-wider transition-all border ${
-                                    selectedEco.includes(feature.id) 
-                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-semibold' 
-                                    : 'bg-white border-stone-200 text-stone-500 hover:border-black'
-                                }`}
-                            >
-                                {selectedEco.includes(feature.id) ? '✓ ' : '+ '} {feature.label}
-                            </button>
-                        ))}
-                    </div>
-                    {/* Hidden input to ensure register works with current selection */}
-                    <input type="hidden" {...register('eco_features')} />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {featuresList.map((feature) => (
+                    <button
+                        key={feature.id}
+                        type="button"
+                        onClick={() => toggleFeature(feature.id)}
+                        className={`text-left px-4 py-3 text-xs border ${
+                            selectedEco.includes(feature.id) 
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                            : 'bg-white border-stone-200 text-stone-500'
+                        } rounded transition-all w-full`}
+                    >
+                        {selectedEco.includes(feature.id) ? '✓ ' : '+ '} {feature.label}
+                    </button>
+                ))}
             </div>
 
             {/* Image Upload Area */}

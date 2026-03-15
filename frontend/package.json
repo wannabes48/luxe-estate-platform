@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
     "@next/third-parties": "^16.1.6",
     "@supabase/supabase-js": "^2.93.3",

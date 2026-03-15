@@ -20,6 +20,8 @@ import { Metadata } from 'next';
 import AgentAvatar from "@/components/AgentAvatar";
 
 import { incrementPropertyView } from "@/app/actions";
+import { LeafIcon } from "lucide-react";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
 export default async function PropertyDetail({
   params
@@ -53,6 +55,8 @@ export default async function PropertyDetail({
 
   const agent = property.agent;
   const coverImage = property.images?.find((img: any) => img.is_cover) || property.images?.[0];
+
+  const features = property.eco_features || [];
 
   return (
     <main className="bg-[#FCFAFA] min-h-screen pb-24 relative">
@@ -114,6 +118,34 @@ export default async function PropertyDetail({
 
           <PropertySpecs specs={property} />
 
+          <div className="mt-12 border-t border-stone-100 pt-12">
+            <h3 className="font-serif text-2xl mb-6">Sustainable Features</h3>
+      
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {features.length > 0 ? (
+                features.map((featureKey: string) => (
+                  <div key={featureKey} className="flex items-center gap-4 p-4 bg-stone-50 rounded-xl">
+                    <div className="w-10 h-10 bg-emerald-100 text-emerald-700 flex items-center justify-center rounded-full">
+                    {/* Dynamic icon logic or a generic leaf icon */}
+                    <LeafIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-stone-900 uppercase tracking-tight">
+                      {/* We map the key back to a pretty name */}
+                      {featureKey.replace(/_/g, ' ')}
+                    </p>
+                    <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">
+                      Verified Asset
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-stone-400 italic">No specific eco-features listed for this property.</p>
+            )}
+          </div>
+        </div>
+
           <article className="prose prose-stone max-w-none mt-20">
             <h3 className="font-serif text-3xl text-[#0D0D0D] mb-8">The Narrative</h3>
             <p className="text-stone-600 text-lg leading-relaxed whitespace-pre-line">
@@ -170,6 +202,44 @@ export default async function PropertyDetail({
       <PropertyNavigation prevProp={prevProp} nextProp={nextProp} />
       <Footer />
     </main>
+  );
+}
+
+// app/properties/[slug]/page.tsx
+type PropertyType = {
+  eco_features?: string[];
+  // Add other property fields as needed for this component
+};
+
+export function PropertySustainability({ property }: { property: PropertyType }) {
+  // If you used the view above, use property.eco_labels
+  // If not, we map them here for safety
+  const displayLabels = property.eco_features || [];
+
+  return (
+    <div className="bg-stone-50 p-8 rounded-3xl border border-stone-100">
+      <div className="flex items-center gap-3 mb-8">
+        <div className="p-2 bg-emerald-100 rounded-lg">
+          <LeafIcon className="w-5 h-5 text-emerald-700" />
+        </div>
+        <h3 className="font-serif text-xl text-stone-900">Sustainability & Climate Resilience</h3>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {displayLabels.map((featureId: string) => (
+          <div key={featureId} className="flex items-center justify-between p-4 bg-white border border-stone-100 rounded-xl shadow-sm">
+            <span className="text-xs uppercase tracking-widest text-stone-500 font-medium">
+              {/* Turn 'solar_panel' into 'Solar Panel' if label fetch fails */}
+              {featureId.replace(/_/g, ' ')}
+            </span>
+            <div className="flex items-center gap-1 text-emerald-600">
+              <CheckBadgeIcon className="w-4 h-4" />
+              <span className="text-[10px] font-bold uppercase">Verified</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
