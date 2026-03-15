@@ -3,6 +3,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { CldImage } from 'next-cloudinary'
+import { EcoBadge } from './EcoBadge';
 
 export function PropertyCard({ property }: { property: any }) {
   // Robust image resolution
@@ -63,6 +64,9 @@ export function PropertyCard({ property }: { property: any }) {
               <div className="bg-[#E91E63] text-white text-[10px] font-bold px-4 py-1.5 uppercase tracking-widest w-fit">
                 {property.is_featured ? 'Featured' : 'Exclusive'}
               </div>
+            </div>
+            <div className="absolute top-4 right-4 z-10">
+              <EcoBadge green_score={property.green_score} />
             </div>
           </div>
 
