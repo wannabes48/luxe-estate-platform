@@ -18,7 +18,11 @@ async function fetchSupabaseProperties(filters: any) {
         *,
         location:locations(name, city),
         images:property_images(*)
-      `);
+      `)
+      .eq('status', 'for_sale')
+      .order('is_boosted', { ascending: false }) // Boosted homes at the very top
+      .order('green_score', { ascending: false }) // Then sort by Green Score
+      .order('created_at', { ascending: false }); // Then newest first
 
     // 2. Apply Filters (Mapping your filter names to DB columns)
     if (filters.location && filters.location !== 'all') {

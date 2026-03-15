@@ -11,6 +11,14 @@ import GetVerifiedBadge from '@/components/agent/GetVerifiedBadge'
 import LuxuryToast from '@/components/ui/LuxuryToast'
 import { getLeadsForAgent } from '@/app/actions'
 
+interface LeaderboardAgent {
+    agent_id: string;
+    agent_name: string;
+    current_tier: string;
+    total_properties: number;
+    avg_green_score: number;
+}
+
 export default function AgentDashboard() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
@@ -18,6 +26,7 @@ export default function AgentDashboard() {
     const [properties, setProperties] = useState<any[]>([])
     const [leads, setLeads] = useState<any[]>([])
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error', show: boolean }>({ msg: '', type: 'success', show: false })
+    const [leaders, setLeaders] = useState<LeaderboardAgent[]>([]);
 
     // Helper for showing toast
     const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -58,6 +67,18 @@ export default function AgentDashboard() {
 
             setLoading(false)
         }
+
+        async function fetchLeaderboard() {
+            // Fetch top 10 agents from our new View
+            const { data, error } = await supabase
+                .from('agent_sustainability_leaderboard')
+                .select('*')
+                .limit(10);
+            
+            if (data) setLeaders(data);
+            setLoading(false);
+        }
+        fetchLeaderboard();
 
         checkSession()
     }, [router])
@@ -248,6 +269,61 @@ export default function AgentDashboard() {
 
                 {/* Dashboard Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    <div className="bg-white border border-stone-100 p-8 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+                <div>
+                    <h3 className="font-serif text-2xl text-stone-900">Sustainability Leaderboard</h3>
+                    <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">
+                        Average portfolio Green Score (70+ unlocks Pro Tier)
+                    </p>
+                </div>
+                <div className="hidden sm:block p-3 bg-emerald-50 rounded-full">
+                    <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                {leaders.map((agent, index) => {
+                    const isEcoPro = agent.avg_green_score >= 70;
+
+                    return (
+                        <div key={agent.agent_id} className={`flex items-center justify-between p-4 border transition-all ${
+                            isEcoPro 
+                            ? 'bg-emerald-50/50 border-emerald-200 shadow-sm' 
+                            : 'bg-[#FAFAFA] border-stone-100'
+                        }`}>
+                            <div className="flex items-center gap-4">
+                                <span className={`font-serif text-xl ${index < 3 ? 'text-black font-bold' : 'text-stone-400'}`}>
+                                    #{index + 1}
+                                </span>
+                                <div>
+                                    <p className="font-medium text-stone-900 text-sm">{agent.agent_name}</p>
+                                    <p className="text-[10px] text-stone-500 uppercase tracking-wider">
+                                        {agent.total_properties} Listings
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-4">
+                                {isEcoPro && (
+                                    <span className="hidden sm:inline-flex px-2.5 py-1 bg-emerald-600 text-white text-[9px] uppercase tracking-widest rounded-full animate-in fade-in zoom-in duration-500">
+                                        Eco-Pro Unlocked
+                                    </span>
+                                )}
+                                <div className="text-right">
+                                    <p className={`font-bold text-lg ${isEcoPro ? 'text-emerald-700' : 'text-stone-700'}`}>
+                                        {agent.avg_green_score}
+                                    </p>
+                                    <p className="text-[9px] uppercase tracking-widest text-stone-400">Avg Score</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
 
                     {/* Stats & Tools Column */}
                     <div className="space-y-8">

@@ -18,6 +18,7 @@ export default async function ListingsPage({ searchParams
 }) {
   // 1. Await the searchParams Promise (Crucial for Next.js 15)
   const resolvedParams = await searchParams;
+  
 
   // 2. Map the resolved params to your filters object
   const filters = {
