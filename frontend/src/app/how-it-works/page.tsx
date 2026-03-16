@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import ReturnNavBar from '@/components/ReturnNavBar';
+import Footer from "@/components/Footer";
 
 export default function HowItWorks() {
     const [user, setUser] = useState<any>(null);
@@ -122,6 +123,7 @@ export default function HowItWorks() {
 
                     </div>
                 </div>
+                <Footer />
             </section>
         </main>
     );

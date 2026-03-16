@@ -3,19 +3,19 @@ import { ethers } from "hardhat";
 async function main() {
   console.log("Preparing deployment to Polygon Amoy...");
 
-  const propertyName = "Luxe Kilimani Heights";
-  const tokenSymbol = "LUX-KIL";
-  const databaseId = "db-uuid-from-supabase-here"; // The property_id from your DB
+  const propertyName = "Riverside Estate";
+  const tokenSymbol = "RIV-EST";
+  const databaseId = "4f5a3358-19f8-4904-ace5-ba07a1e689be"; // Paste your actual property_id here
 
-  // 1. Get the Contract Factory
+  // Standard, fully-typed ethers import
   const PropertyShare = await ethers.getContractFactory("LuxePropertyShare");
 
   console.log(`Deploying ${propertyName} (${tokenSymbol})...`);
 
-  // 2. Deploy the contract with constructor arguments
-  const propertyShare = await PropertyShare.deploy(propertyName, tokenSymbol, databaseId);
+  const propertyShare = await PropertyShare.deploy(propertyName, tokenSymbol, databaseId, {
+    gasLimit: 3000000 // Manually setting a cap can sometimes help
+  });
 
-  // 3. Wait for the transaction to be mined
   await propertyShare.waitForDeployment();
 
   const contractAddress = await propertyShare.getAddress();

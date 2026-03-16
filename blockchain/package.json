@@ -1,29 +1,21 @@
 {
-  "name": "blockchain",
+  "name": "luxe-estate-contracts",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Production Smart Contracts for Luxe Estate",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.ts --network amoy"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "devDependencies": {
-    "@nomicfoundation/hardhat-ethers": "^4.0.6",
-    "@nomicfoundation/hardhat-ignition": "^3.0.9",
-    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.3",
-    "@types/dotenv": "^6.1.1",
-    "@types/node": "^22.19.15",
-    "dotenv": "^17.3.1",
-    "ethers": "^6.16.0",
-    "forge-std": "github:foundry-rs/forge-std#v1.9.4",
-    "hardhat": "^3.1.12",
-    "typescript": "~5.8.0",
-    "viem": "^2.47.4"
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.30",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.15",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.6.1"
-  },
-  "type": "module"
+  }
 }

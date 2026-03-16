@@ -1,6 +1,10 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import Link from 'next/link';
+import NavBar from '@/components/NavBar';
+import Footer from '@/components/Footer';
+import ReturnNavBar from '@/components/ReturnNavBar';
 
 export default function FractionalMarketplace() {
     const [properties, setProperties] = useState<any[]>([]);
@@ -89,6 +93,7 @@ export default function FractionalMarketplace() {
 
     return (
         <div className="min-h-screen bg-[#FAFAFA] pt-24 pb-20">
+            <ReturnNavBar />
             <div className="max-w-7xl mx-auto px-6">
                 
                 <div className="mb-12">
@@ -191,6 +196,7 @@ export default function FractionalMarketplace() {
                     </div>
                 </div>
             )}
+            <Footer />
         </div>
     );
 }

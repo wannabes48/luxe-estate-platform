@@ -146,7 +146,9 @@ export default function LoginPage() {
                         </p>
                     </div>
                 </div>
+                
             </section>
+            
         </main>
     );
 }
