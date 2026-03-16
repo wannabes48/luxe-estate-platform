@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
         for (const investor of investors) {
             // Note: Ensure your users table actually stores 'phone_number' in a 2547XXXXXXXX format
-            const phone = investor.user_profiles?.phone_number; 
+            const phone = investor.user_profiles?.[0]?.phone_number; 
             const payoutAmount = Math.floor(investor.shares_owned * dividendPerShare);
 
             if (!phone || payoutAmount <= 0) {
