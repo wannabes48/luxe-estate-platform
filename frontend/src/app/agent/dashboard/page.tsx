@@ -28,6 +28,12 @@ export default function AgentDashboard() {
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error', show: boolean }>({ msg: '', type: 'success', show: false })
     const [leaders, setLeaders] = useState<LeaderboardAgent[]>([]);
 
+    // Tokenization Modal State
+    const [isTokenizeModalOpen, setIsTokenizeModalOpen] = useState(false);
+    const [selectedAsset, setSelectedAsset] = useState<any>(null);
+    const [roiInput, setRoiInput] = useState('8.5');
+    const [isTokenizing, setIsTokenizing] = useState(false);
+
     // Helper for showing toast
     const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type, show: true })
@@ -51,16 +57,16 @@ export default function AgentDashboard() {
             if (agentData) {
                 setAgent(agentData)
 
-                // Fetch Properties (with images)
+                // Fetch Properties (Added property_shares to check if already tokenized)
                 const { data: props } = await supabase
                     .from('properties')
-                    .select('*, images:property_images(*)')
+                    .select('*, images:property_images(*), property_shares(*)')
                     .eq('agent_id', agentData.id)
                     .order('created_at', { ascending: false })
 
                 setProperties(props || [])
 
-                // Fetch Leads using Server Action (with Masking)
+                // Fetch Leads using Server Action
                 const agentLeads = await getLeadsForAgent(agentData.id)
                 setLeads(agentLeads || [])
             }
@@ -69,7 +75,6 @@ export default function AgentDashboard() {
         }
 
         async function fetchLeaderboard() {
-            // Fetch top 10 agents from our new View
             const { data, error } = await supabase
                 .from('agent_sustainability_leaderboard')
                 .select('*')
@@ -88,7 +93,6 @@ export default function AgentDashboard() {
         router.push('/agent/login')
     }
 
-    // Admin Contact Handler
     const handleContactAdmin = async (e: React.FormEvent) => {
         e.preventDefault()
         const form = e.target as HTMLFormElement
@@ -112,10 +116,7 @@ export default function AgentDashboard() {
         }
     }
 
-    // Upgrade Handler
     const handleUpgrade = async () => {
-        // if (!confirm("Request an upgrade to Professional Tier? An admin will review your account.")) return;
-
         const { error } = await supabase
             .from('admin_messages')
             .insert([{
@@ -131,7 +132,6 @@ export default function AgentDashboard() {
         }
     }
 
-    // Boost Handler
     const handleBoost = async (propertyId: string) => {
         const BOOST_COST = 50;
         if ((agent?.credits || 0) < BOOST_COST) {
@@ -139,41 +139,64 @@ export default function AgentDashboard() {
             return;
         }
 
-        // if (!confirm(`Boost this listing for ${BOOST_COST} credits?`)) return;
-
         setLoading(true)
         try {
-            // 1. Boost Property (Attempt first so we don't charge if it fails)
             const { error: propError } = await supabase
                 .from('properties')
-                .update({
-                    is_boosted: true,
-                })
+                .update({ is_boosted: true })
                 .eq('property_id', propertyId)
 
-            if (propError) {
-                console.error("Property Update Failed:", propError)
-                throw new Error("Could not update property. " + propError.message)
-            }
+            if (propError) throw new Error("Could not update property. " + propError.message)
 
-            // 2. Deduct Credits (Only if property update succeeded)
             const { error: creditError } = await supabase
                 .from('agents')
                 .update({ credits: (agent.credits - BOOST_COST) })
                 .eq('id', agent.id)
 
-            if (creditError) {
-                console.error("Credit Deduction Failed:", creditError)
-                showToast("Warning: Property boosted but credit deduction failed.", 'error')
-            }
+            if (creditError) showToast("Warning: Property boosted but credit deduction failed.", 'error')
 
-            // 3. Refresh Data
             showToast("Property Boosted! Your listing is now promoted.", 'success')
-            // Optimistic Update or Reload
             setTimeout(() => window.location.reload(), 1500)
         } catch (error: any) {
             showToast("Boost failed: " + error.message, 'error')
             setLoading(false)
+        }
+    }
+
+    // --- NEW: Tokenization Handler ---
+    const executeTokenization = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedAsset) return;
+        setIsTokenizing(true);
+
+        try {
+            const propertyId = selectedAsset.property_id || selectedAsset.id;
+            const pricePerShare = selectedAsset.price / 1000;
+
+            const { error } = await supabase
+                .from('property_shares')
+                .insert([{
+                    property_id: propertyId,
+                    total_shares: 1000,
+                    available_shares: 1000,
+                    price_per_share: pricePerShare,
+                    projected_roi: parseFloat(roiInput),
+                    // In Phase 3, this triggers the Hardhat script. For now, we mock the deployment status.
+                    smart_contract_address: `PENDING_DEPLOYMENT_${Date.now()}` 
+                }]);
+
+            if (error) throw error;
+
+            showToast(`${selectedAsset.title} successfully tokenized into 1,000 shares!`, 'success');
+            setIsTokenizeModalOpen(false);
+            
+            // Reload to show the updated fractionalized tag
+            setTimeout(() => window.location.reload(), 1500);
+
+        } catch (error: any) {
+            showToast("Tokenization failed: " + error.message, 'error');
+        } finally {
+            setIsTokenizing(false);
         }
     }
 
@@ -236,14 +259,6 @@ export default function AgentDashboard() {
                                     size={100}
                                     level={"H"}
                                     includeMargin={true}
-                                    imageSettings={{
-                                        src: "/favicon.png", // Path to your company logo in the public folder
-                                        x: undefined, // Centers automatically
-                                        y: undefined, // Centers automatically
-                                        height: 50,
-                                        width: 50,
-                                        excavate: true, // This clears the QR pixels behind the logo
-                                    }}
                                 />
                             </div>
                             <button
@@ -269,61 +284,46 @@ export default function AgentDashboard() {
 
                 {/* Dashboard Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    
+                    {/* Leaderboard Column */}
                     <div className="bg-white border border-stone-100 p-8 shadow-sm">
-            <div className="mb-6 flex items-center justify-between">
-                <div>
-                    <h3 className="font-serif text-2xl text-stone-900">Sustainability Leaderboard</h3>
-                    <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">
-                        Average portfolio Green Score (70+ unlocks Pro Tier)
-                    </p>
-                </div>
-                <div className="hidden sm:block p-3 bg-emerald-50 rounded-full">
-                    <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
-            </div>
-
-            <div className="space-y-3">
-                {leaders.map((agent, index) => {
-                    const isEcoPro = agent.avg_green_score >= 70;
-
-                    return (
-                        <div key={agent.agent_id} className={`flex items-center justify-between p-4 border transition-all ${
-                            isEcoPro 
-                            ? 'bg-emerald-50/50 border-emerald-200 shadow-sm' 
-                            : 'bg-[#FAFAFA] border-stone-100'
-                        }`}>
-                            <div className="flex items-center gap-4">
-                                <span className={`font-serif text-xl ${index < 3 ? 'text-black font-bold' : 'text-stone-400'}`}>
-                                    #{index + 1}
-                                </span>
-                                <div>
-                                    <p className="font-medium text-stone-900 text-sm">{agent.agent_name}</p>
-                                    <p className="text-[10px] text-stone-500 uppercase tracking-wider">
-                                        {agent.total_properties} Listings
-                                    </p>
-                                </div>
+                        <div className="mb-6 flex items-center justify-between">
+                            <div>
+                                <h3 className="font-serif text-2xl text-stone-900">Sustainability Leaderboard</h3>
+                                <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">
+                                    Average portfolio Green Score
+                                </p>
                             </div>
-                            
-                            <div className="flex items-center gap-4">
-                                {isEcoPro && (
-                                    <span className="hidden sm:inline-flex px-2.5 py-1 bg-emerald-600 text-white text-[9px] uppercase tracking-widest rounded-full animate-in fade-in zoom-in duration-500">
-                                        Eco-Pro Unlocked
-                                    </span>
-                                )}
-                                <div className="text-right">
-                                    <p className={`font-bold text-lg ${isEcoPro ? 'text-emerald-700' : 'text-stone-700'}`}>
-                                        {agent.avg_green_score}
-                                    </p>
-                                    <p className="text-[9px] uppercase tracking-widest text-stone-400">Avg Score</p>
-                                </div>
+                            <div className="hidden sm:block p-3 bg-emerald-50 rounded-full">
+                                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
                             </div>
                         </div>
-                    );
-                })}
-            </div>
-        </div>
+
+                        <div className="space-y-3">
+                            {leaders.map((ldr, index) => {
+                                const isEcoPro = ldr.avg_green_score >= 70;
+                                return (
+                                    <div key={ldr.agent_id} className={`flex items-center justify-between p-4 border transition-all ${
+                                        isEcoPro ? 'bg-emerald-50/50 border-emerald-200 shadow-sm' : 'bg-[#FAFAFA] border-stone-100'
+                                    }`}>
+                                        <div className="flex items-center gap-4">
+                                            <span className={`font-serif text-xl ${index < 3 ? 'text-black font-bold' : 'text-stone-400'}`}>#{index + 1}</span>
+                                            <div>
+                                                <p className="font-medium text-stone-900 text-sm">{ldr.agent_name}</p>
+                                                <p className="text-[10px] text-stone-500 uppercase tracking-wider">{ldr.total_properties} Listings</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className={`font-bold text-lg ${isEcoPro ? 'text-emerald-700' : 'text-stone-700'}`}>{ldr.avg_green_score}</p>
+                                            <p className="text-[9px] uppercase tracking-widest text-stone-400">Avg Score</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
 
                     {/* Stats & Tools Column */}
                     <div className="space-y-8">
@@ -336,88 +336,38 @@ export default function AgentDashboard() {
                             <p className="font-serif text-5xl text-[#0D0D0D]">{leads.length}</p>
                         </div>
 
-                        {/* Admin Contact Form */}
                         <div className="bg-stone-100 p-8 border border-stone-200">
                             <p className="text-[10px] uppercase tracking-widest text-stone-500 mb-4 font-bold">Contact Admin</p>
                             <form onSubmit={handleContactAdmin} className="space-y-4">
-                                <textarea
-                                    name="message"
-                                    className="w-full bg-white border border-stone-300 p-3 text-sm outline-none focus:border-black resize-none"
-                                    rows={3}
-                                    placeholder="Request support or credits..."
-                                    required
-                                />
-                                <button className="w-full bg-black text-white py-2 text-[10px] uppercase tracking-widest hover:bg-[#E91E63] transition-colors">
-                                    Send Message
-                                </button>
+                                <textarea name="message" className="w-full bg-white border border-stone-300 p-3 text-sm outline-none focus:border-black resize-none" rows={3} placeholder="Request support or credits..." required />
+                                <button className="w-full bg-black text-white py-2 text-[10px] uppercase tracking-widest hover:bg-[#E91E63] transition-colors">Send Message</button>
                             </form>
                         </div>
                     </div>
 
                     {/* Leads Column */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-1">
                         <div className="flex justify-between items-end mb-8">
                             <h2 className="font-serif text-3xl text-[#0D0D0D]">Recent Inquiries</h2>
                         </div>
                         <div className="space-y-4">
                             {leads.length === 0 ? (
-                                <p className="text-stone-400 text-sm">No inquiries yet. Boost your listings to get more leads.</p>
+                                <p className="text-stone-400 text-sm">No inquiries yet.</p>
                             ) : (
                                 leads.map((lead, index) => (
-                                    <div key={lead.id || index} className="bg-white p-6 border border-stone-100 shadow-sm flex justify-between items-center hover:shadow-md transition-shadow">
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start">
-                                                <p className="font-serif text-xl mb-1">{lead.full_name}</p>
-                                                {lead.is_masked && <span className="text-[9px] bg-stone-100 text-stone-500 px-2 py-1 uppercase tracking-widest">Protected</span>}
-                                            </div>
-                                            <p className="text-stone-500 text-xs uppercase tracking-widest mb-2">{lead.property_name || 'General Inquiry'}</p>
-                                            <p className="text-stone-400 text-sm italic mb-2">"{lead.message}"</p>
-
-                                            {/* Contact Details (Masked or Unmasked) */}
-                                            <div className="flex gap-4 text-xs font-mono text-stone-600 bg-stone-50 p-2 inline-flex items-center">
-                                                <span>{lead.email}</span>
-                                                <span className="text-stone-300">|</span>
-                                                <span>{lead.phone}</span>
-
-                                                {/* WhatsApp Quick Reply */}
-                                                {!lead.is_masked && lead.phone ? (
-                                                    <a
-                                                        href={`https://wa.me/${lead.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${lead.full_name}, I am ${agent?.name} from Luxe Estate regarding your inquiry on ${lead.property_name || 'our property'}.`)}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="ml-4 flex items-center gap-2 bg-[#25D366] text-white px-3 py-1 text-[10px] uppercase tracking-widest font-bold hover:bg-[#128C7E] transition-colors rounded-sm"
-                                                    >
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                                                        </svg>
-                                                        WhatsApp Client
-                                                    </a>
-                                                ) : (
-                                                    <button
-                                                        disabled
-                                                        className="ml-4 flex items-center gap-2 bg-stone-200 text-stone-400 px-3 py-1 text-[10px] uppercase tracking-widest font-bold cursor-not-allowed rounded-sm"
-                                                        title="Upgrade to Premium to create direct WhatsApp links"
-                                                    >
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
-                                                        </svg>
-                                                        Locked
-                                                    </button>
-                                                )}
-                                            </div>
+                                    <div key={lead.id || index} className="bg-white p-6 border border-stone-100 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <p className="font-serif text-xl">{lead.full_name}</p>
+                                            <p className="text-xs font-bold text-stone-400">{new Date(lead.created_at).toLocaleDateString()}</p>
                                         </div>
-                                        <div className="text-right ml-4">
-                                            <p className="text-xs font-bold mb-1">{new Date(lead.created_at).toLocaleDateString()}</p>
+                                        <p className="text-stone-500 text-[10px] uppercase tracking-widest mb-2">{lead.property_name || 'General'}</p>
+                                        <div className="flex gap-4 text-xs font-mono text-stone-600 bg-stone-50 p-2 mt-2">
+                                            <span>{lead.email}</span>
                                         </div>
                                     </div>
                                 ))
                             )}
                         </div>
-                        {agent?.tier !== 'premium' && leads.length > 0 && (
-                            <div className="mt-4 text-center">
-                                <p className="text-xs text-stone-500">Upgrade to Premium to view full contact details.</p>
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -433,49 +383,124 @@ export default function AgentDashboard() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {properties.map((prop, index) => (
-                            <div key={prop.property_id || prop.id || index} className="bg-white group cursor-pointer border border-stone-100 pb-6 relative">
-                                {/* Boosted Tag */}
-                                {prop.is_boosted && (
-                                    <div className="absolute top-2 right-2 z-10 bg-[#D4AF37] text-white text-[9px] font-bold px-2 py-1 uppercase tracking-widest">
-                                        Promoted
+                        {properties.map((prop, index) => {
+                            const isTokenized = prop.property_shares && prop.property_shares.length > 0;
+
+                            return (
+                                <div key={prop.property_id || prop.id || index} className="bg-white group cursor-pointer border border-stone-100 pb-6 relative">
+                                    {/* Promoted Tag */}
+                                    {prop.is_boosted && (
+                                        <div className="absolute top-2 right-2 z-10 bg-[#D4AF37] text-white text-[9px] font-bold px-2 py-1 uppercase tracking-widest">
+                                            Promoted
+                                        </div>
+                                    )}
+                                    {/* Web3 Tokenized Tag */}
+                                    {isTokenized && (
+                                        <div className="absolute top-2 left-2 z-10 bg-emerald-500 text-black text-[9px] font-bold px-2 py-1 uppercase tracking-widest shadow-md">
+                                            ✦ Fractionalized
+                                        </div>
+                                    )}
+
+                                    <div className="aspect-[4/3] bg-stone-100 overflow-hidden mb-4 relative">
+                                        <img
+                                            src={prop.images?.[0]?.image_url || 'https://via.placeholder.com/800x600?text=No+Image'}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                            alt={prop.title}
+                                        />
                                     </div>
-                                )}
+                                    <div className="px-6">
+                                        <h4 className="font-serif text-xl mb-2 line-clamp-1">{prop.title}</h4>
+                                        <p className="text-stone-400 text-[10px] uppercase tracking-widest mb-4">Ksh {prop.price.toLocaleString()}</p>
 
-                                <div className="aspect-[4/3] bg-stone-100 overflow-hidden mb-4 relative">
-                                    {/* Fixed Image Access: Using property_images alias 'images' */}
-                                    <img
-                                        src={prop.images?.[0]?.image_url || 'https://via.placeholder.com/800x600?text=No+Image'}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                        alt={prop.title}
-                                    />
-                                </div>
-                                <div className="px-6">
-                                    <h4 className="font-serif text-xl mb-2 line-clamp-1">{prop.title}</h4>
-                                    <p className="text-stone-400 text-[10px] uppercase tracking-widest mb-4">Ksh {prop.price.toLocaleString()}</p>
+                                        <PropertyAnalytics views={prop.views_count || 0} leads={leads.filter(l => l.property_id === (prop.property_id || prop.id)).length} />
 
-                                    {/* Analytics Component */}
-                                    <PropertyAnalytics views={prop.views_count || 0} leads={leads.filter(l => l.property_id === (prop.property_id || prop.id)).length} />
-
-                                    <div className="flex gap-4 mt-4">
-                                        <Link href={`/agent/properties/${prop.property_id || prop.id}/edit`}>
-                                            <button className="text-[10px] uppercase tracking-widest border-b border-black hover:text-[#E91E63] hover:border-[#E91E63] transition-colors">Edit</button>
-                                        </Link>
-                                        {!prop.is_boosted && (
-                                            <button
-                                                onClick={() => handleBoost(prop.property_id || prop.id)}
-                                                className="text-[10px] uppercase tracking-widest text-[#E91E63] font-bold hover:text-black transition-colors"
-                                            >
-                                                Boost Listing
-                                            </button>
-                                        )}
+                                        <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-stone-100">
+                                            <Link href={`/agent/properties/${prop.property_id || prop.id}/edit`}>
+                                                <button className="text-[10px] uppercase tracking-widest border-b border-black hover:text-[#E91E63] hover:border-[#E91E63] transition-colors">Edit</button>
+                                            </Link>
+                                            {!prop.is_boosted && (
+                                                <button onClick={() => handleBoost(prop.property_id || prop.id)} className="text-[10px] uppercase tracking-widest text-[#E91E63] font-bold hover:text-black transition-colors">
+                                                    Boost
+                                                </button>
+                                            )}
+                                            
+                                            {/* Tokenize Button Logic */}
+                                            {!isTokenized ? (
+                                                <button 
+                                                    onClick={() => { setSelectedAsset(prop); setIsTokenizeModalOpen(true); }}
+                                                    className="ml-auto text-[10px] uppercase tracking-widest text-emerald-600 font-bold hover:text-black transition-colors"
+                                                >
+                                                    Tokenize Asset
+                                                </button>
+                                            ) : (
+                                                <span className="ml-auto text-[10px] uppercase tracking-widest text-stone-400 font-bold flex items-center gap-1">
+                                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> Web3 Active
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </div>
             </div>
+
+            {/* Tokenization Modal */}
+            {isTokenizeModalOpen && selectedAsset && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white max-w-md w-full p-8 shadow-2xl relative">
+                        <button onClick={() => setIsTokenizeModalOpen(false)} className="absolute top-4 right-4 text-stone-400 hover:text-black">✕</button>
+                        
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            </div>
+                            <h3 className="font-serif text-2xl text-stone-900">Mint Property Shares</h3>
+                            <p className="text-xs text-stone-500 uppercase tracking-widest mt-1">Convert asset to Web3 tokens</p>
+                        </div>
+
+                        <div className="bg-stone-50 p-4 border border-stone-100 mb-6 space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-xs text-stone-500">Asset Value</span>
+                                <span className="text-sm font-bold">{selectedAsset.price.toLocaleString()} KES</span>
+                            </div>
+                            <div className="flex justify-between border-b border-stone-200 pb-3">
+                                <span className="text-xs text-stone-500">Total Shares to Mint</span>
+                                <span className="text-sm font-bold text-emerald-600">1,000</span>
+                            </div>
+                            <div className="flex justify-between pt-1">
+                                <span className="text-xs text-stone-500">Price Per Share</span>
+                                <span className="text-lg font-bold">{(selectedAsset.price / 1000).toLocaleString()} KES</span>
+                            </div>
+                        </div>
+
+                        <form onSubmit={executeTokenization}>
+                            <div className="mb-6">
+                                <label className="text-[10px] uppercase tracking-widest text-stone-400 block mb-2">Projected Annual ROI (%)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.1"
+                                    required
+                                    value={roiInput} 
+                                    onChange={(e) => setRoiInput(e.target.value)} 
+                                    className="w-full bg-[#FAFAFA] border border-stone-200 p-3 outline-none focus:border-emerald-500 font-mono text-lg" 
+                                    placeholder="e.g. 8.5"
+                                />
+                                <p className="text-[9px] text-stone-400 mt-2">This yield will be distributed to token holders monthly via M-Pesa B2C.</p>
+                            </div>
+
+                            <button 
+                                disabled={isTokenizing} 
+                                type="submit" 
+                                className="w-full bg-black text-white py-4 text-xs uppercase tracking-[0.2em] hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                            >
+                                {isTokenizing ? 'Generating Smart Contract...' : 'Confirm Tokenization'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

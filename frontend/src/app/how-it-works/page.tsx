@@ -12,82 +12,117 @@ export default function HowItWorks() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] pt-24 pb-20">
-            <ReturnNavBar />
-            {/* Hero Section */}
-            <div className="max-w-4xl mx-auto px-6 text-center mb-20">
-                <h1 className="text-4xl md:text-6xl font-serif text-stone-900 mb-6 leading-tight">
-                    Real Estate Wealth, <br />
-                    <span className="text-emerald-600">Democratized.</span>
-                </h1>
-                <p className="text-lg text-stone-600 max-w-2xl mx-auto font-light">
-                    Luxe Fractional uses blockchain technology and M-Pesa to break down multi-million shilling properties into affordable, income-generating shares.
-                </p>
+        <main className="min-h-screen flex w-full relative bg-[#FAFAFA] overflow-hidden">
+            {/* Absolute positioning for the Return Navbar */}
+            <div className="absolute top-0 left-0 w-full z-50">
+                <ReturnNavBar />
             </div>
 
-            {/* The 4-Step Process */}
-            <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-24">
-                {[
-                    { step: "01", title: "Browse Assets", desc: "Explore climate-resilient, verified luxury properties across Kenya." },
-                    { step: "02", title: "Micro-Invest", desc: "Buy shares for as little as 10,000 KES instantly using M-Pesa." },
-                    { step: "03", title: "Web3 Ownership", desc: "Your shares are minted as secure, immutable tokens on the Polygon Blockchain." },
-                    { step: "04", title: "Earn Dividends", desc: "Receive your portion of the monthly rental income directly to your phone." }
-                ].map((item, i) => (
-                    <div key={i} className="bg-white p-8 border border-stone-200 hover:border-emerald-400 transition-colors">
-                        <span className="text-4xl font-serif text-stone-200 mb-4 block">{item.step}</span>
-                        <h3 className="text-lg font-bold text-stone-900 mb-2 uppercase tracking-wide">{item.title}</h3>
-                        <p className="text-sm text-stone-600 leading-relaxed">{item.desc}</p>
+            {/* --- LEFT SIDE: Fixed Image & Glass Overlay (Hidden on Mobile) --- */}
+            <section className="relative hidden lg:flex lg:w-1/2 items-center justify-center h-screen">
+                <div
+                    className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
+                    style={{ backgroundImage: "url('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop')" }}
+                />
+                <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                <div className="relative z-10 w-full max-w-lg p-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl text-white transform translate-y-8">
+                    <div className="w-12 h-1 bg-emerald-500 mb-6"></div>
+                    <h1 className="text-5xl font-serif leading-tight mb-6">
+                        Real Estate Wealth, <br />
+                        <span className="text-emerald-400">Democratized.</span>
+                    </h1>
+                    <p className="text-stone-300 font-light leading-relaxed text-lg mb-8">
+                        Luxe Fractional uses blockchain technology and M-Pesa to break down multi-million shilling properties into affordable, income-generating shares.
+                    </p>
+                    
+                    <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest font-bold">
+                        <span className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                            Asset-Backed Innovation
+                        </span>
                     </div>
-                ))}
-            </div>
+                </div>
+            </section>
 
-            {/* The Entry Funnel (Your requested CTAs) */}
-            <div className="max-w-5xl mx-auto px-6">
-                <div className="bg-stone-950 text-white rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="grid grid-cols-1 md:grid-cols-2">
+            {/* --- RIGHT SIDE: Scrollable Content & CTAs --- */}
+            <section className="w-full lg:w-1/2 h-screen overflow-y-auto flex flex-col px-6 py-20 pt-32 lg:px-16 lg:py-24">
+                <div className="max-w-xl mx-auto w-full pb-10">
+                    
+                    <div className="mb-12">
+                        <h2 className="text-3xl font-serif text-stone-900">How It Works</h2>
+                        <p className="text-xs text-stone-500 uppercase tracking-widest mt-2">
+                            The 4-Step Fractional Process
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 mb-16">
+                        {[
+                            { step: "01", title: "Browse Assets", desc: "Explore climate-resilient, verified luxury properties across Kenya." },
+                            { step: "02", title: "Micro-Invest", desc: "Buy shares for as little as 10,000 KES instantly using M-Pesa." },
+                            { step: "03", title: "Web3 Ownership", desc: "Your shares are minted as secure, immutable tokens on the Polygon Blockchain." },
+                            { step: "04", title: "Earn Dividends", desc: "Receive your portion of the monthly rental income directly to your phone." }
+                        ].map((item, i) => (
+                            <div key={i} className="bg-white p-6 border border-stone-200 hover:border-emerald-400 transition-colors flex gap-6 items-start shadow-sm rounded-lg">
+                                <span className="text-3xl font-serif text-emerald-100">{item.step}</span>
+                                <div>
+                                    <h3 className="text-md font-bold text-stone-900 mb-1 uppercase tracking-wide">{item.title}</h3>
+                                    <p className="text-sm text-stone-600 leading-relaxed">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* The Entry Funnel */}
+                    <div className="bg-stone-950 text-white shadow-2xl overflow-hidden rounded-2xl">
                         
                         {/* Investor Path */}
-                        <div className="p-12 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-center">
-                            <h3 className="text-2xl font-serif mb-4">I want to Invest</h3>
+                        <div className="p-10 border-b border-white/10">
+                            <h3 className="text-2xl font-serif mb-3">I want to Invest</h3>
                             <p className="text-stone-400 text-sm mb-8">
-                                Start building your fractional real estate portfolio today. Get monthly yields paid to your M-Pesa.
+                                Start building your fractional real estate portfolio today. Get monthly yields paid directly to your M-Pesa.
                             </p>
-                            {user ? (
-                                <Link href="/dashboard" className="w-full text-center px-6 py-4 bg-emerald-500 text-black text-xs uppercase tracking-widest font-bold hover:bg-emerald-400 transition-colors">
+                            
+                            <div className="space-y-4">
+                                <Link 
+                                    href={user ? "/dashboard" : "/auth/login"} 
+                                    className="block w-full text-center px-6 py-5 bg-emerald-500 text-black text-xs uppercase tracking-widest font-bold hover:bg-emerald-400 transition-colors shadow-lg"
+                                >
                                     Go to My Portfolio
                                 </Link>
-                            ) : (
-                                <div className="space-y-4">
-                                    <Link href="/auth/register?role=investor" className="block w-full text-center px-6 py-4 bg-emerald-500 text-black text-xs uppercase tracking-widest font-bold hover:bg-emerald-400 transition-colors">
-                                        Create Investor Account
-                                    </Link>
-                                    <p className="text-center text-xs text-stone-500">
-                                        Already have an account? <Link href="/auth/login" className="text-emerald-400 hover:underline">Log In</Link>
+                                {!user && (
+                                    <p className="text-center text-xs text-stone-500 mt-4">
+                                        New to Luxe? <Link href="/auth/register?role=investor" className="text-emerald-400 font-bold hover:underline uppercase tracking-widest text-[10px]">Create an Account</Link>
                                     </p>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
 
                         {/* Property Owner Path */}
-                        <div className="p-12 flex flex-col justify-center bg-stone-900/50">
-                            <h3 className="text-2xl font-serif mb-4">I want to List a Property</h3>
+                        <div className="p-10 bg-stone-900/50">
+                            <h3 className="text-2xl font-serif mb-3">I want to List a Property</h3>
                             <p className="text-stone-400 text-sm mb-8">
                                 Tokenize your building to raise capital quickly. Let the community fund your next sustainable development.
                             </p>
-                            {user ? (
-                                <Link href="/agent/dashboard" className="w-full text-center px-6 py-4 border border-white/20 text-white text-xs uppercase tracking-widest hover:bg-white/10 transition-colors">
+                            
+                            <div className="space-y-4">
+                                <Link 
+                                    href={user ? "/agent/dashboard" : "/auth/login"} 
+                                    className="block w-full text-center px-6 py-5 border border-white/20 text-white text-xs uppercase tracking-widest hover:bg-white/10 transition-colors"
+                                >
                                     Manage My Listings
                                 </Link>
-                            ) : (
-                                <Link href="/auth/register?role=owner" className="block w-full text-center px-6 py-4 border border-white/20 text-white text-xs uppercase tracking-widest hover:bg-white/10 transition-colors">
-                                    Apply as Property Owner
-                                </Link>
-                            )}
+                                {!user && (
+                                    <p className="text-center text-xs text-stone-500 mt-4">
+                                        Want to list an asset? <Link href="/auth/register?role=owner" className="text-white font-bold hover:underline uppercase tracking-widest text-[10px]">Apply Here</Link>
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        </main>
     );
 }
