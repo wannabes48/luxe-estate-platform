@@ -1,64 +1,117 @@
-// app/api/mpesa/callback/route.ts
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabaseAdmin'; // Use Service Role key to bypass RLS
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(req: Request) {
     try {
-        const data = await req.json();
-        
-        // 1. Extract the callback data
-        const callbackData = data.Body.stkCallback;
-        const merchantRequestID = callbackData.MerchantRequestID;
-        const resultCode = callbackData.ResultCode;
+        const payload = await req.json();
+        const stkCallback = payload.Body.stkCallback;
+        const checkoutRequestId = stkCallback.CheckoutRequestID;
+        const resultCode = stkCallback.ResultCode;
 
-        // 2. Handle Failed Transactions (User cancelled, insufficient funds, etc.)
-        if (resultCode !== 0) {
-            console.error(`M-Pesa transaction failed: ${callbackData.ResultDesc}`);
-            // Optionally update a 'pending_transactions' table to 'failed' here
-            return NextResponse.json({ status: 'Acknowledged' });
+        // 1. Fetch the original pending transaction using Safaricom's Receipt ID
+        const { data: transaction, error: txError } = await supabaseAdmin
+            .from('transactions')
+            .select('*')
+            .eq('checkout_request_id', checkoutRequestId)
+            .single();
+
+        if (txError || !transaction) {
+            console.error("Transaction not found for ID:", checkoutRequestId);
+            return NextResponse.json({ ResultCode: 0, ResultDesc: "Acknowledged" });
         }
 
-        // 3. Parse Success Data
-        const callbackItems = callbackData.CallbackMetadata.Item;
-        let amount = 0, mpesaReceipt = '', phoneNumber = '';
+        // 2. Handle Failed Payments (User cancelled, insufficient funds, wrong PIN)
+        if (resultCode !== 0) {
+            await supabaseAdmin.from('transactions').update({ status: 'failed' }).eq('id', transaction.id);
+            return NextResponse.json({ ResultCode: 0, ResultDesc: "Failure Logged" });
+        }
 
-        callbackItems.forEach((item: any) => {
-            if (item.Name === 'Amount') amount = item.Value;
-            if (item.Name === 'MpesaReceiptNumber') mpesaReceipt = item.Value;
-            if (item.Name === 'PhoneNumber') phoneNumber = item.Value.toString();
-        });
+        // --- 3. EXECUTE SHARE TRANSFER SUCCESS LOGIC ---
+        
+        if (transaction.purchase_type === 'primary') {
+            // SCENARIO A: Buying original shares from the platform
+            
+            const { data: propShares } = await supabaseAdmin.from('property_shares').select('price_per_share, available_shares').eq('property_id', transaction.property_id).single();
+            const sharesBought = Math.floor(transaction.amount / propShares!.price_per_share);
 
-        // 4. Retrieve pending transaction context (You'd pass these in the STK Push AccountReference)
-        // For this example, assume we temporarily stored the intent in Redis or a DB table
-        const userId = "extracted-user-uuid"; 
-        const propertyId = "extracted-property-uuid";
-        const sharesBought = amount / 10000; // Assuming 10k KES per share
+            const { data: existingInvestment } = await supabaseAdmin.from('investments')
+                .select('*').eq('user_id', transaction.user_id).eq('property_id', transaction.property_id).single();
 
-        // 5. Execute Atomic Database Transaction via RPC
-        const { data: dbSuccess, error: rpcError } = await supabaseAdmin.rpc('process_share_purchase', {
-            buyer_id: userId,
-            target_property_id: propertyId,
-            shares_to_buy: sharesBought,
-            amount_paid: amount
-        });
+            if (existingInvestment) {
+                await supabaseAdmin.from('investments').update({
+                    shares_owned: existingInvestment.shares_owned + sharesBought,
+                    amount_invested: Number(existingInvestment.amount_invested) + Number(transaction.amount)
+                }).eq('id', existingInvestment.id);
+            } else {
+                await supabaseAdmin.from('investments').insert({
+                    user_id: transaction.user_id,
+                    property_id: transaction.property_id,
+                    shares_owned: sharesBought,
+                    amount_invested: transaction.amount
+                });
+            }
 
-        if (rpcError || !dbSuccess) throw new Error("Database update failed");
+            // Decrement available shares
+            await supabaseAdmin.from('property_shares').update({
+                available_shares: propShares!.available_shares - sharesBought
+            }).eq('property_id', transaction.property_id);
 
-        // 6. Log the exact M-Pesa receipt for auditing
-        await supabaseAdmin.from('mpesa_transactions').insert([{
-            user_id: userId,
-            property_id: propertyId,
-            mpesa_receipt: mpesaReceipt,
-            amount: amount,
-            phone_number: phoneNumber
-        }]);
+        } else if (transaction.purchase_type === 'secondary') {
+            // SCENARIO B: Peer-to-Peer Trading (Buying from another investor)
 
-        // 7. FUTURE STEP: Trigger Web3 script to mint Polygon tokens to user's wallet here
+            const { data: listing } = await supabaseAdmin.from('secondary_listings').select('*').eq('id', transaction.listing_id).single();
+            if (!listing) throw new Error("Listing not found.");
 
-        return NextResponse.json({ status: 'Success' });
+            // Add shares to the BUYER
+            const { data: buyerInvestment } = await supabaseAdmin.from('investments')
+                .select('*').eq('user_id', transaction.user_id).eq('property_id', transaction.property_id).single();
 
-    } catch (error) {
-        console.error("M-Pesa Webhook Error:", error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+            if (buyerInvestment) {
+                await supabaseAdmin.from('investments').update({
+                    shares_owned: buyerInvestment.shares_owned + listing.shares_offered,
+                    amount_invested: Number(buyerInvestment.amount_invested) + Number(transaction.amount)
+                }).eq('id', buyerInvestment.id);
+            } else {
+                await supabaseAdmin.from('investments').insert({
+                    user_id: transaction.user_id,
+                    property_id: transaction.property_id,
+                    shares_owned: listing.shares_offered,
+                    amount_invested: transaction.amount
+                });
+            }
+
+            // Deduct shares from the SELLER
+            const { data: sellerInvestment } = await supabaseAdmin.from('investments')
+                .select('*').eq('user_id', listing.seller_id).eq('property_id', transaction.property_id).single();
+
+            const newSellerShares = sellerInvestment!.shares_owned - listing.shares_offered;
+            if (newSellerShares <= 0) {
+                await supabaseAdmin.from('investments').delete().eq('id', sellerInvestment!.id);
+            } else {
+                await supabaseAdmin.from('investments').update({
+                    shares_owned: newSellerShares,
+                    amount_invested: Number(sellerInvestment!.amount_invested) - Number(transaction.amount)
+                }).eq('id', sellerInvestment!.id);
+            }
+
+            // Mark the secondary listing as SOLD
+            await supabaseAdmin.from('secondary_listings').update({ status: 'sold' }).eq('id', listing.id);
+        }
+
+        // 4. Mark transaction as completed
+        await supabaseAdmin.from('transactions').update({ status: 'completed' }).eq('id', transaction.id);
+
+        // 5. FUTURE STEP: Trigger Web3 script to mint Polygon tokens here
+
+        return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
+
+    } catch (error: any) {
+        console.error("Webhook processing error:", error);
+        return NextResponse.json({ ResultCode: 0, ResultDesc: "Error caught but acknowledged" });
     }
 }

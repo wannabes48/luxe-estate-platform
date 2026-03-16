@@ -11,6 +11,14 @@ export default function RegisterPage() {
     const initialRole = searchParams.get('role') === 'owner' ? 'owner' : 'investor';
 
     const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+    
+    // Auth Mode State for Phone OTP
+    const [authMode, setAuthMode] = useState<'standard' | 'phone_otp'>('standard');
+    const [otpPhone, setOtpPhone] = useState('');
+
+    // Standard Form State
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -19,15 +27,85 @@ export default function RegisterPage() {
         nationalId: '',
         role: initialRole
     });
-    const [errorMsg, setErrorMsg] = useState('');
 
+    // --- 1. GOOGLE SSO ---
+    const handleGoogleLogin = async () => {
+        setErrorMsg('');
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/dashboard`
+            }
+        });
+        if (error) setErrorMsg(error.message);
+    };
+
+    // --- 2. WEB3 WALLET (MetaMask) ---
+    const handleWeb3Login = async () => {
+        setErrorMsg('');
+        if (typeof window === 'undefined' || !(window as any).ethereum) {
+            setErrorMsg("MetaMask is not installed. Please install it to use Web3 login.");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const eth = (window as any).ethereum;
+            const accounts = await eth.request({ method: 'eth_requestAccounts' });
+            const address = accounts[0];
+            
+            // Note: In a production Web3 app, you would prompt the user to sign a cryptographic message 
+            // here, send it to a custom backend endpoint, and return a Supabase JWT. 
+            // For now, we capture the address.
+            setSuccessMsg(`Wallet Connected: ${address.substring(0, 6)}...${address.substring(38)}. Proceeding...`);
+            
+            // Redirect to dashboard or KYC completion page
+            setTimeout(() => router.push('/dashboard'), 2000);
+
+        } catch (error: any) {
+            setErrorMsg(error.message || "Wallet connection failed.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- 3. PHONE OTP (Passwordless) ---
+    const handlePhoneOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setErrorMsg('');
+        setLoading(true);
+
+        try {
+            // Ensure phone is in E.164 format (+254...)
+            let formattedPhone = otpPhone.replace(/[^0-9]/g, '');
+            if (formattedPhone.startsWith('0')) {
+                formattedPhone = '254' + formattedPhone.substring(1);
+            }
+            if (!formattedPhone.startsWith('+')) {
+                formattedPhone = '+' + formattedPhone;
+            }
+
+            const { error } = await supabase.auth.signInWithOtp({
+                phone: formattedPhone,
+            });
+
+            if (error) throw error;
+            setSuccessMsg(`OTP sent to ${formattedPhone}. Check your messages.`);
+            // You would typically swap to an "Enter OTP" view here
+        } catch (error: any) {
+            setErrorMsg(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- 4. STANDARD MANUAL REGISTRATION ---
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setErrorMsg('');
 
         try {
-            // 1. Create the user in Supabase Auth
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
@@ -36,7 +114,6 @@ export default function RegisterPage() {
             if (authError) throw authError;
 
             if (authData.user) {
-                // 2. Save KYC and Role data to our user_profiles table
                 const { error: profileError } = await supabase
                     .from('user_profiles')
                     .insert([{
@@ -48,12 +125,10 @@ export default function RegisterPage() {
                         kyc_verified: false 
                     }]);
 
-                if (profileError) {
-                    console.error("Profile Error:", profileError);
-                }
+                if (profileError) console.error("Profile Error:", profileError);
 
-                alert("Registration successful! Please check your email to verify your account.");
-                router.push('/auth/login');
+                setSuccessMsg("Registration successful! Please check your email to verify your account.");
+                setTimeout(() => router.push('/auth/login'), 3000);
             }
         } catch (error: any) {
             setErrorMsg(error.message);
@@ -64,23 +139,18 @@ export default function RegisterPage() {
 
     return (
         <main className="min-h-screen flex w-full relative bg-[#FAFAFA]">
-            {/* Absolute positioning for the Return Navbar */}
             <div className="absolute top-0 left-0 w-full z-50">
                 <ReturnNavBar />
             </div>
 
-            {/* --- LEFT SIDE: Image & Glass Overlay (Hidden on Mobile) --- */}
+            {/* --- LEFT SIDE: Image & Glass Overlay --- */}
             <section className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
-                {/* Background Image (Different angle/vibe for registration) */}
                 <div
                     className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
                     style={{ backgroundImage: "url('https://images.unsplash.com/photo-1613490900233-0402ef0a2db7?q=80&w=1974&auto=format&fit=crop')" }}
                 />
-                
-                {/* Dark Gradient Overlay */}
                 <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
-                {/* Glassmorphism Content Box */}
                 <div className="relative z-10 w-full max-w-md p-10 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl text-white transform translate-y-8">
                     <div className="w-12 h-1 bg-emerald-500 mb-6"></div>
                     <h2 className="text-4xl font-serif leading-tight mb-4">
@@ -90,7 +160,6 @@ export default function RegisterPage() {
                     <p className="text-stone-300 font-light leading-relaxed mb-8">
                         Join Luxe Fractional today. Whether you are tokenizing a premium development or investing your first 10,000 KES, the future of real estate is here.
                     </p>
-                    
                     <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest font-bold">
                         <span className="flex items-center gap-2">
                             <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,96 +177,163 @@ export default function RegisterPage() {
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-serif text-stone-900">Join Luxe</h1>
                         <p className="text-xs text-stone-500 uppercase tracking-widest mt-2">
-                            Secure KYC Verification
+                            Choose your preferred method
                         </p>
                     </div>
 
-                    {errorMsg && (
-                        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs">
-                            {errorMsg}
+                    {errorMsg && <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs">{errorMsg}</div>}
+                    {successMsg && <div className="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 text-xs">{successMsg}</div>}
+
+                    {/* --- QUICK ACTIONS (SSO & Web3) --- */}
+                    {authMode === 'standard' && (
+                        <div className="space-y-3 mb-8">
+                            <button 
+                                onClick={handleGoogleLogin}
+                                type="button" 
+                                className="w-full flex items-center justify-center gap-3 bg-white border border-stone-200 text-stone-700 py-3 text-xs uppercase tracking-widest font-bold hover:bg-stone-50 transition-colors"
+                            >
+                                <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
+                                Continue with Google
+                            </button>
+                            
+                            <button 
+                                onClick={handleWeb3Login}
+                                type="button" 
+                                className="w-full flex items-center justify-center gap-3 bg-[#F6851B]/10 border border-[#F6851B]/30 text-[#F6851B] py-3 text-xs uppercase tracking-widest font-bold hover:bg-[#F6851B]/20 transition-colors"
+                            >
+                                <svg className="w-4 h-4" viewBox="0 0 100 100" fill="none"><path d="M91.8 45.4L50 14.1 8.2 45.4l11.4 34.1h60.8l11.4-34.1z" fill="#E2761B"/><path d="M50 14.1L8.2 45.4l26.9 8.2L50 14.1z" fill="#E4761B"/><path d="M50 14.1l41.8 31.3-26.9 8.2L50 14.1z" fill="#F6851B"/><path d="M50 82.2L35.1 53.6l14.9-20.9 14.9 20.9L50 82.2z" fill="#E4761B"/></svg>
+                                Connect Web3 Wallet
+                            </button>
+
+                            <button 
+                                onClick={() => setAuthMode('phone_otp')}
+                                type="button" 
+                                className="w-full flex items-center justify-center gap-3 bg-stone-900 border border-stone-900 text-white py-3 text-xs uppercase tracking-widest font-bold hover:bg-stone-800 transition-colors"
+                            >
+                                📱 Continue with Phone (SMS)
+                            </button>
                         </div>
                     )}
 
-                    <form onSubmit={handleRegister} className="space-y-5">
-                        {/* Role Selector */}
-                        <div className="grid grid-cols-2 gap-2 mb-6">
-                            <button 
-                                type="button"
-                                onClick={() => setFormData({...formData, role: 'investor'})}
-                                className={`py-4 text-[10px] uppercase tracking-widest border transition-all font-bold ${formData.role === 'investor' ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-inner' : 'bg-white border-stone-200 text-stone-400 hover:border-emerald-300'}`}
-                            >
-                                Investor
-                            </button>
-                            <button 
-                                type="button"
-                                onClick={() => setFormData({...formData, role: 'owner'})}
-                                className={`py-4 text-[10px] uppercase tracking-widest border transition-all font-bold ${formData.role === 'owner' ? 'bg-stone-900 border-stone-900 text-white shadow-inner' : 'bg-white border-stone-200 text-stone-400 hover:border-stone-400'}`}
-                            >
-                                Property Owner
-                            </button>
+                    {authMode === 'standard' && (
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="h-px bg-stone-200 flex-1"></div>
+                            <span className="text-[10px] uppercase tracking-widest text-stone-400 font-bold">Or register with email</span>
+                            <div className="h-px bg-stone-200 flex-1"></div>
                         </div>
+                    )}
 
-                        <div>
-                            <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">Full Legal Name</label>
-                            <input 
-                                required 
-                                type="text" 
-                                className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
-                                onChange={e => setFormData({...formData, fullName: e.target.value})} 
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* --- DYNAMIC FORM RENDER --- */}
+                    {authMode === 'phone_otp' ? (
+                        <form onSubmit={handlePhoneOtp} className="space-y-5 animate-in fade-in zoom-in duration-300">
                             <div>
-                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">National ID / Passport</label>
+                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">Phone Number (For SMS OTP)</label>
+                                <input 
+                                    required 
+                                    type="tel" 
+                                    placeholder="+254 7..."
+                                    className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-lg" 
+                                    value={otpPhone}
+                                    onChange={e => setOtpPhone(e.target.value)} 
+                                />
+                            </div>
+                            <button 
+                                disabled={loading} 
+                                type="submit" 
+                                className="w-full bg-black text-white py-5 text-xs uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all disabled:opacity-50 font-bold shadow-lg"
+                            >
+                                {loading ? 'Sending Code...' : 'Send SMS Code'}
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={() => setAuthMode('standard')}
+                                className="w-full text-[10px] uppercase tracking-widest text-stone-500 hover:text-stone-900 font-bold mt-4"
+                            >
+                                ← Back to Email Registration
+                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleRegister} className="space-y-5 animate-in fade-in duration-300">
+                            {/* Role Selector */}
+                            <div className="grid grid-cols-2 gap-2 mb-6">
+                                <button 
+                                    type="button"
+                                    onClick={() => setFormData({...formData, role: 'investor'})}
+                                    className={`py-4 text-[10px] uppercase tracking-widest border transition-all font-bold ${formData.role === 'investor' ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-inner' : 'bg-white border-stone-200 text-stone-400 hover:border-emerald-300'}`}
+                                >
+                                    Investor
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => setFormData({...formData, role: 'owner'})}
+                                    className={`py-4 text-[10px] uppercase tracking-widest border transition-all font-bold ${formData.role === 'owner' ? 'bg-stone-900 border-stone-900 text-white shadow-inner' : 'bg-white border-stone-200 text-stone-400 hover:border-stone-400'}`}
+                                >
+                                    Property Owner
+                                </button>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">Full Legal Name</label>
                                 <input 
                                     required 
                                     type="text" 
                                     className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
-                                    onChange={e => setFormData({...formData, nationalId: e.target.value})} 
+                                    onChange={e => setFormData({...formData, fullName: e.target.value})} 
                                 />
                             </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">National ID / Passport</label>
+                                    <input 
+                                        required 
+                                        type="text" 
+                                        className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
+                                        onChange={e => setFormData({...formData, nationalId: e.target.value})} 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">M-Pesa Number</label>
+                                    <input 
+                                        required 
+                                        type="tel" 
+                                        placeholder="2547..." 
+                                        className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
+                                        onChange={e => setFormData({...formData, phoneNumber: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">M-Pesa Number</label>
+                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">Email Address</label>
                                 <input 
                                     required 
-                                    type="tel" 
-                                    placeholder="2547..." 
+                                    type="email" 
                                     className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
-                                    onChange={e => setFormData({...formData, phoneNumber: e.target.value})} 
+                                    onChange={e => setFormData({...formData, email: e.target.value})} 
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">Email Address</label>
-                            <input 
-                                required 
-                                type="email" 
-                                className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
-                                onChange={e => setFormData({...formData, email: e.target.value})} 
-                            />
-                        </div>
+                            <div>
+                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">Password</label>
+                                <input 
+                                    required 
+                                    type="password" 
+                                    minLength={6} 
+                                    className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
+                                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                                />
+                            </div>
 
-                        <div>
-                            <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">Password</label>
-                            <input 
-                                required 
-                                type="password" 
-                                minLength={6} 
-                                className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" 
-                                onChange={e => setFormData({...formData, password: e.target.value})} 
-                            />
-                        </div>
-
-                        <button 
-                            disabled={loading} 
-                            type="submit" 
-                            className="w-full mt-8 bg-black text-white py-5 text-xs uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all disabled:opacity-50 font-bold shadow-lg"
-                        >
-                            {loading ? 'Processing KYC...' : 'Create Account'}
-                        </button>
-                    </form>
+                            <button 
+                                disabled={loading} 
+                                type="submit" 
+                                className="w-full mt-8 bg-black text-white py-5 text-xs uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all disabled:opacity-50 font-bold shadow-lg"
+                            >
+                                {loading ? 'Processing...' : 'Create Account'}
+                            </button>
+                        </form>
+                    )}
 
                     <div className="mt-8 pt-8 border-t border-stone-100 text-center">
                         <p className="text-xs text-stone-500">
