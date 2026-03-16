@@ -18,14 +18,27 @@ export default function FractionalMarketplace() {
             const { data, error } = await supabase
                 .from('properties')
                 .select(`
-                    property_id, title, location_city,
-                    property_shares!inner(total_shares, available_shares, price_per_share, projected_roi),
+                    property_id, 
+                    title,
+                    locations(city),
+                    price,
+                    property_shares(*),
                     property_images(image_url)
                 `)
-                .eq('status', 'for_sale'); // Only active listings
+                .in('status', ['FOR_SALE', 'RENTAL']); // Only active listings
 
-            if (data) setProperties(data);
-            setLoading(false);
+            if (error) {
+                console.error("Supabase Error:", error);
+            } else {
+                console.log("Raw Database Response:", data);
+            
+                // Now we manually filter it in the frontend just to see what survives
+                const validProperties = data?.filter(p => p.property_shares && p.property_shares.length > 0) || [];
+                console.log("Properties with shares:", validProperties);
+            
+                setProperties(validProperties);
+            }
+        setLoading(false);
         }
         fetchMarketplace();
     }, []);
@@ -99,7 +112,7 @@ export default function FractionalMarketplace() {
                                 </div>
                                 
                                 <div className="p-6">
-                                    <p className="text-[10px] uppercase tracking-widest text-stone-400 mb-1">{property.location_city}</p>
+                                    <p className="text-[10px] uppercase tracking-widest text-stone-400 mb-1">{property.locations?.city || 'Premium Location'}</p>
                                     <h3 className="font-serif text-xl text-stone-900 mb-4">{property.title}</h3>
                                     
                                     <div className="space-y-4 mb-6">

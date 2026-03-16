@@ -12,7 +12,7 @@ export default function NavBar() {
     { name: 'Contact', path: '/contact' },
     { name: 'Agents', path: '/agents' },
     { name: 'Blog', path: '/blog' },
-    { name: 'Marketplace', path: '/properties' },
+    { name: 'Marketplace', path: '/invest' },
     { name: 'How It Works', path: '/how-it-works' },
   ];
     const [user, setUser] = useState<any>(null);
