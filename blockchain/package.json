@@ -10,9 +10,13 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.6",
     "@nomicfoundation/hardhat-ignition": "^3.0.9",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.3",
+    "@types/dotenv": "^6.1.1",
     "@types/node": "^22.19.15",
+    "dotenv": "^17.3.1",
+    "ethers": "^6.16.0",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "hardhat": "^3.1.12",
     "typescript": "~5.8.0",
