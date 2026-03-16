@@ -152,7 +152,7 @@ export default function AdminPropertiesDashboard() {
                                         <tr key={prop.property_id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
                                             <td className="p-5">
                                                 <p className="font-serif text-stone-900 text-lg">{prop.title}</p>
-                                                <p className="text-xs text-stone-500 mt-1">📍 {prop.locations?.city}</p>
+                                                <p className="text-xs text-stone-500 mt-1">📍 {prop.locations?.[0]?.city}</p>
                                                 <p className="text-[10px] text-stone-400 font-mono mt-1">ID: {prop.property_id.split('-')[0]}...</p>
                                             </td>
                                             
