@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import ReturnNavBar from "@/components/ReturnNavBar";
+import Footer from "@/components/Footer";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -53,11 +54,7 @@ export default function LoginPage() {
 
     return (
         <main className="min-h-screen flex w-full relative bg-[#FAFAFA]">
-            {/* Absolute positioning for the Return Navbar so it hovers over the layout */}
-            {/* Back Button */}
-                <button onClick={() => router.back()} className="text-[10px] uppercase tracking-widest text-stone-500 hover:text-stone-900 mb-8 flex items-center gap-2">
-                    ← Go Back
-                </button>
+            <ReturnNavBar/>
 
             {/* --- LEFT SIDE: Image & Glass Overlay (Hidden on Mobile) --- */}
             <section className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
@@ -147,9 +144,7 @@ export default function LoginPage() {
                         </p>
                     </div>
                 </div>
-                
             </section>
-            
         </main>
     );
 }

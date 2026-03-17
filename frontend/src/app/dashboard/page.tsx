@@ -305,6 +305,9 @@ export default function InvestorDashboard() {
                     <Link href="/invest" className="text-[10px] uppercase tracking-widest text-stone-400 hover:text-white transition-colors">Marketplace</Link>
                     <div className="w-px h-4 bg-stone-700"></div>
                     <span className="text-[10px] uppercase tracking-widest hidden md:block">Welcome, {user?.full_name || user?.email?.split('@')[0]}</span>
+                    <Link href="/dashboard/settings" className="bg-white text-black px-6 py-3 text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-colors font-bold">
+                        Settings
+                    </Link>
                     <button onClick={handleLogout} className="text-[10px] uppercase tracking-widest text-emerald-400 font-bold hover:text-white transition-colors">Logout</button>
                 </div>
             </nav>
