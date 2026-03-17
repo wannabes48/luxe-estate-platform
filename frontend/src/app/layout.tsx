@@ -17,8 +17,6 @@ const playfair = Playfair({
   display: 'swap',
 })
 
-import { Metadata } from 'next';
-
 export const metadata: Metadata = {
   title: {
     template: '%s | Luxe Estate',

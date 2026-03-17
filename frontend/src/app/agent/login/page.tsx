@@ -3,19 +3,6 @@ import React, { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Agent & Developer Portal',
-  description: 'List your luxury properties on Luxe Estate. Reach global Web3 investors and tokenize your architectural inventory for faster liquidity.',
-  keywords: [
-    'list luxury property Kenya',
-    'real estate agent portal',
-    'tokenize real estate development',
-    'sell luxury homes Nairobi, Kisii, Mombasa, Nakuru, Kenya, Kisumu, Malindi, Kwale, Joska',
-    'property fractionalization services'
-  ],
-};
 
 export default function AgentLogin() {
     const [loading, setLoading] = useState(false)
