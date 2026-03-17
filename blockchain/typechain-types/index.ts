@@ -22,3 +22,7 @@ export type { IERC20 } from "./@openzeppelin/contracts/token/ERC20/IERC20";
 export { IERC20__factory } from "./factories/@openzeppelin/contracts/token/ERC20/IERC20__factory";
 export type { LuxePropertyShare } from "./contracts/LuxePropertyShare";
 export { LuxePropertyShare__factory } from "./factories/contracts/LuxePropertyShare__factory";
+export type { PropertyFactory } from "./contracts/PropertyFactory.sol/PropertyFactory";
+export { PropertyFactory__factory } from "./factories/contracts/PropertyFactory.sol/PropertyFactory__factory";
+export type { PropertyToken } from "./contracts/PropertyFactory.sol/PropertyToken";
+export { PropertyToken__factory } from "./factories/contracts/PropertyFactory.sol/PropertyToken__factory";

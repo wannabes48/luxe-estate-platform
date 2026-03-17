@@ -2,13 +2,18 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
+import { ethers } from 'ethers';
+
+// 1. The ABI for the Factory Contract we will deploy
+const FACTORY_ABI = [
+    "function deployProperty(string name, string symbol, uint256 totalShares, uint256 pricePerShare, string propertyId) external returns (address)",
+    "event PropertyDeployed(string propertyId, address contractAddress, uint256 totalShares)"
+];
 
 interface PropertyData {
     property_id: string;
     title: string;
-    locations: {
-        city: string;
-    }[];
+    locations: { city: string; }[];
     status: string;
     property_shares: {
         total_shares: number;
@@ -22,7 +27,8 @@ export default function AdminPropertiesDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     
-    // State for inline editing of the smart contract address
+    // UI States for Deployment and Editing
+    const [mintingId, setMintingId] = useState<string | null>(null);
     const [editingContractId, setEditingContractId] = useState<string | null>(null);
     const [tempContractAddress, setTempContractAddress] = useState('');
 
@@ -44,13 +50,7 @@ export default function AdminPropertiesDashboard() {
             .order('created_at', { ascending: false });
 
         if (data) setProperties(data);
-        if (error) {
-            console.error("Supabase Error Message:", error.message);
-            console.error("Supabase Error Details:", error.details);
-
-            // Pop up an alert so you can see it without checking the terminal
-            alert(`Database Error: ${error.message}`); 
-        }
+        if (error) alert(`Database Error: ${error.message}`); 
         setIsLoading(false);
     };
 
@@ -67,11 +67,86 @@ export default function AdminPropertiesDashboard() {
         }
     };
 
-    const handleSaveContract = async (propertyId: string) => {
-        if (!tempContractAddress.startsWith('0x')) {
-            alert("Valid Polygon smart contract addresses must start with '0x'");
-            return;
+    // --- AUTOMATED WEB3 DEPLOYMENT ENGINE ---
+    const handleAutomatedDeployment = async (prop: PropertyData) => {
+        const factoryAddress = process.env.NEXT_PUBLIC_FACTORY_ADDRESS;
+        if (!factoryAddress) return alert("Missing NEXT_PUBLIC_FACTORY_ADDRESS in .env.local");
+
+        if (typeof window === 'undefined' || !(window as any).ethereum) {
+            return alert("Please install MetaMask to deploy contracts.");
         }
+
+        const shareData = prop.property_shares?.[0];
+        if (!shareData) return alert("Setup share pricing before minting.");
+
+        setMintingId(prop.property_id);
+
+        try {
+            const provider = new ethers.BrowserProvider((window as any).ethereum);
+            const signer = await provider.getSigner();
+            const factoryContract = new ethers.Contract(factoryAddress, FACTORY_ABI, signer);
+
+            // Generate a sleek ticker symbol
+            const symbol = `LUXE-${prop.title.replace(/\s+/g, '').substring(0, 4).toUpperCase()}`;
+
+            // 1. Execute the transaction
+            const tx = await factoryContract.deployProperty(
+                prop.title,
+                symbol,
+                shareData.total_shares,
+                shareData.price_per_share,
+                prop.property_id
+            );
+
+            // 2. Wait for confirmation
+            const receipt = await tx.wait();
+
+            // 3. Extract the new contract address from the event logs
+            let newContractAddress = null;
+            for (const log of receipt.logs) {
+                try {
+                    const parsedLog = factoryContract.interface.parseLog(log);
+                    if (parsedLog && parsedLog.name === 'PropertyDeployed') {
+                        newContractAddress = parsedLog.args.contractAddress;
+                        break;
+                    }
+                } catch (e) { /* Ignore unparseable logs */ }
+            }
+
+            if (!newContractAddress) throw new Error("Deployment succeeded but failed to capture the address from logs.");
+
+            // 4. Save the generated address to Supabase automatically
+            const { error } = await supabase
+                .from('property_shares')
+                .update({ smart_contract_address: newContractAddress })
+                .eq('property_id', prop.property_id);
+
+            if (error) throw error;
+
+            // 5. Update local UI
+            setProperties(properties.map(p => {
+                if (p.property_id === prop.property_id && p.property_shares.length > 0) {
+                    return {
+                        ...p,
+                        property_shares: [{ ...p.property_shares[0], smart_contract_address: newContractAddress }]
+                    };
+                }
+                return p;
+            }));
+
+            alert(`Success! Token deployed at: ${newContractAddress}`);
+
+        } catch (error: any) {
+            console.error("Deployment failed:", error);
+            alert(`Failed: ${error.message || "Transaction rejected"}`);
+        } finally {
+            setMintingId(null);
+        }
+    };
+
+    // Manual Override (Just in case)
+    const handleSaveContract = async (propertyId: string) => {
+        if (!tempContractAddress.startsWith('0x')) return alert("Valid Polygon addresses must start with '0x'");
 
         const { error } = await supabase
             .from('property_shares')
@@ -81,10 +156,7 @@ export default function AdminPropertiesDashboard() {
         if (!error) {
             setProperties(properties.map(p => {
                 if (p.property_id === propertyId && p.property_shares.length > 0) {
-                    return {
-                        ...p,
-                        property_shares: [{ ...p.property_shares[0], smart_contract_address: tempContractAddress }]
-                    };
+                    return { ...p, property_shares: [{ ...p.property_shares[0], smart_contract_address: tempContractAddress }] };
                 }
                 return p;
             }));
@@ -97,7 +169,7 @@ export default function AdminPropertiesDashboard() {
 
     const filteredProperties = properties.filter(prop => 
         prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prop.locations?.[0]?.city.toLowerCase().includes(searchTerm.toLowerCase())
+        prop.locations?.[0]?.city?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -105,7 +177,7 @@ export default function AdminPropertiesDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
                 <div>
                     <h1 className="text-4xl font-serif text-stone-900">Asset Management</h1>
-                    <p className="text-stone-500 mt-2 text-sm">Manage physical properties and their Web3 token counterparts.</p>
+                    <p className="text-stone-500 mt-2 text-sm">Automated Web3 Deployment Engine.</p>
                 </div>
 
                 <div className="flex w-full md:w-auto gap-4">
@@ -135,18 +207,15 @@ export default function AdminPropertiesDashboard() {
                         </thead>
                         <tbody>
                             {isLoading ? (
-                                <tr>
-                                    <td colSpan={4} className="p-8 text-center text-stone-400">Loading portfolio assets...</td>
-                                </tr>
+                                <tr><td colSpan={4} className="p-8 text-center text-stone-400">Loading portfolio assets...</td></tr>
                             ) : filteredProperties.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4} className="p-8 text-center text-stone-400">No properties found.</td>
-                                </tr>
+                                <tr><td colSpan={4} className="p-8 text-center text-stone-400">No properties found.</td></tr>
                             ) : (
                                 filteredProperties.map((prop) => {
                                     const shareData = prop.property_shares?.[0];
                                     const totalValue = shareData ? (shareData.total_shares * shareData.price_per_share) : 0;
                                     const isDeployed = shareData?.smart_contract_address?.startsWith('0x');
+                                    const isMinting = mintingId === prop.property_id;
 
                                     return (
                                         <tr key={prop.property_id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
@@ -191,29 +260,21 @@ export default function AdminPropertiesDashboard() {
                                                         <p className="font-mono text-xs text-stone-600 truncate w-48" title={shareData.smart_contract_address}>
                                                             {shareData.smart_contract_address.substring(0, 10)}...{shareData.smart_contract_address.substring(38)}
                                                         </p>
-                                                        <button 
-                                                            onClick={() => {
-                                                                setTempContractAddress(shareData.smart_contract_address);
-                                                                setEditingContractId(prop.property_id);
-                                                            }}
-                                                            className="text-[10px] text-stone-400 hover:text-emerald-600 underline mt-1"
-                                                        >
-                                                            Edit Contract
-                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <div>
-                                                        <span className="bg-amber-100 text-amber-700 text-[9px] uppercase tracking-widest px-2 py-1 font-bold rounded-sm inline-block mb-2">
-                                                            Pending Mint
-                                                        </span>
                                                         <button 
-                                                            onClick={() => {
-                                                                setTempContractAddress('');
-                                                                setEditingContractId(prop.property_id);
-                                                            }}
-                                                            className="block text-[10px] bg-[#0D0D0D] text-white px-3 py-2 uppercase tracking-widest hover:bg-emerald-600 transition-colors"
+                                                            onClick={() => handleAutomatedDeployment(prop)}
+                                                            disabled={isMinting || !shareData}
+                                                            className="block w-full text-center text-[10px] bg-[#0D0D0D] text-white px-3 py-3 uppercase tracking-widest hover:bg-emerald-600 transition-colors disabled:opacity-50 shadow-lg"
                                                         >
-                                                            Link Contract
+                                                            {isMinting ? 'Minting... Check Wallet' : 'Mint on Polygon'}
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => { setTempContractAddress(''); setEditingContractId(prop.property_id); }}
+                                                            className="w-full mt-2 text-[9px] text-stone-400 hover:text-stone-900 uppercase tracking-widest"
+                                                        >
+                                                            Or link manually
                                                         </button>
                                                     </div>
                                                 )}

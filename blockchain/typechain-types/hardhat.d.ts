@@ -45,6 +45,14 @@ declare module "hardhat/types/runtime" {
       name: "LuxePropertyShare",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.LuxePropertyShare__factory>;
+    getContractFactory(
+      name: "PropertyFactory",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PropertyFactory__factory>;
+    getContractFactory(
+      name: "PropertyToken",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PropertyToken__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -86,6 +94,16 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.LuxePropertyShare>;
+    getContractAt(
+      name: "PropertyFactory",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PropertyFactory>;
+    getContractAt(
+      name: "PropertyToken",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PropertyToken>;
 
     deployContract(
       name: "Ownable",
@@ -119,6 +137,14 @@ declare module "hardhat/types/runtime" {
       name: "LuxePropertyShare",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.LuxePropertyShare>;
+    deployContract(
+      name: "PropertyFactory",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PropertyFactory>;
+    deployContract(
+      name: "PropertyToken",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PropertyToken>;
 
     deployContract(
       name: "Ownable",
@@ -160,6 +186,16 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.LuxePropertyShare>;
+    deployContract(
+      name: "PropertyFactory",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PropertyFactory>;
+    deployContract(
+      name: "PropertyToken",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PropertyToken>;
 
     // default types
     getContractFactory(
