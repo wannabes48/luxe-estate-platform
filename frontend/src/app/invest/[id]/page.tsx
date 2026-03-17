@@ -27,7 +27,7 @@ export default function PropertyDetailsPage() {
                 .from('properties')
                 .select(`
                     *,
-                    locations(city, address),
+                    locations(city),
                     property_images(image_url),
                     property_shares(*)
                 `)
@@ -35,7 +35,7 @@ export default function PropertyDetailsPage() {
                 .single();
 
             if (error || !data) {
-                console.error("Fetch error:", error);
+                console.error("Fetch error:", error?.message|| error);
                 router.push('/invest'); // Redirect if not found
             } else {
                 setProperty(data);
