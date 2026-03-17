@@ -127,9 +127,10 @@ function RegisterForm() {
 
     return (
         <main className="min-h-screen flex w-full relative bg-[#FAFAFA]">
-            <div className="absolute top-0 left-0 w-full z-50">
-                <ReturnNavBar />
-            </div>
+            {/* Back Button */}
+                <button onClick={() => router.back()} className="text-[10px] uppercase tracking-widest text-stone-500 hover:text-stone-900 mb-8 flex items-center gap-2">
+                    ← Go Back
+                </button>
 
             {/* --- LEFT SIDE: Image & Glass Overlay --- */}
             <section className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
