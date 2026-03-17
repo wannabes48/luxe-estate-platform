@@ -203,12 +203,12 @@ export default function FractionalMarketplace() {
                                             </div>
                                         </div>
 
-                                        <button 
-                                            onClick={() => openPurchaseModal(property, 'primary')}
-                                            className="w-full py-4 border border-stone-900 text-stone-900 text-xs uppercase tracking-widest hover:bg-stone-900 hover:text-white transition-colors"
+                                        <Link 
+                                            href={`/invest/${property.property_id}`}
+                                            className="block text-center w-full py-4 border border-stone-900 text-stone-900 text-xs uppercase tracking-widest hover:bg-stone-900 hover:text-white transition-colors"
                                         >
-                                            Buy Original Shares
-                                        </button>
+                                            View Property Details
+                                        </Link>
                                     </div>
                                 </div>
                             );
