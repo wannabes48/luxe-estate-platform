@@ -1,71 +1,68 @@
-/* src/app/faq/page.tsx */
 import Footer from "@/components/Footer";
 import ReturnNavBar from "@/components/ReturnNavBar";
 
 const faqs = [
+  // --- PLATFORM & PROPERTIES (Original) ---
   {
-    question: "How do I list my property with Luxe Estate?",
-    answer: "Our curation process is selective. Please reach out via our Contact page or contact a Principal Partner directly. We require a preliminary architectural review before listing."
-  },
-  {
-    question: "Do you offer international buyer representation?",
-    answer: "Yes. We specialize in cross-border acquisitions, providing bespoke advisory for high-net-worth individuals looking to enter the Kenyan luxury market."
-  },
-  {
-    question: "What are the costs associated with selling?",
-    answer: "Our commission structures are competitive and reflect the premium marketing, professional cinematography, and global reach we provide for every listing."
-  },
-  {
+    category: "The Platform",
     question: "What is Luxe Estate?",
-    answer: "Luxe Estate is a premium PropTech platform specializing in modernist architectural homes in Kisii and Nyamira, Kenya. We connect high-end buyers with verified agents."
+    answer: "Luxe Estate is a premium PropTech platform specializing in modernist architectural homes in Kenya. We connect high-end buyers with verified agents and offer a revolutionary fractional ownership marketplace."
   },
   {
-    question: "Is Luxe Estate a traditional agency?",
-    answer: "No, we are a technology platform that provides digital tools for agents and a curated marketplace for architectural gems."
-  },
-
-  // Locations & Inventory
-  {
+    category: "The Platform",
     question: "Where are the properties located?",
-    answer: "Our inventory focuses on upscale neighborhoods in Kisii town (like Milimani), Nyamira, and surrounding luxury corridors in Western Kenya."
+    answer: "Our inventory focuses on upscale neighborhoods in major cities and surrounding luxury corridors in the country."
   },
   {
-    question: "What kind of properties do you list?",
-    answer: "We exclusively feature modernist, contemporary, and high-end architectural designs that meet our luxury aesthetic standards."
+    category: "The Platform",
+    question: "How do viewings work for whole-property purchases?",
+    answer: "Click the 'Contact Agent' button on any property page to schedule a viewing. We support both physical walkthroughs and high-fidelity virtual tours."
   },
 
-  // Agent Portal & Monetization
+  // --- FRACTIONAL OWNERSHIP & WEB3 (New) ---
   {
+    category: "Tokenization & Web3",
+    question: "How does fractional ownership work?",
+    answer: "We divide the equity of premium properties into digital shares (tokens) backed by legal frameworks. You can buy these shares directly from developers or trade them with other investors on our platform."
+  },
+  {
+    category: "Tokenization & Web3",
+    question: "Why do I need to connect MetaMask?",
+    answer: "Connecting a Web3 wallet is optional but highly recommended. Your shares are backed by real smart contracts on the Polygon blockchain. Connecting MetaMask allows you to view and verify your cryptographic tokens independently of our website."
+  },
+  {
+    category: "Tokenization & Web3",
+    question: "Is my investment secure on the blockchain?",
+    answer: "Yes. Our smart contracts are built using industry-standard OpenZeppelin libraries and deployed on the Polygon network, ensuring immutable proof of ownership that cannot be altered or deleted."
+  },
+
+  // --- FINANCIALS & M-PESA (New) ---
+  {
+    category: "Financials & Trading",
+    question: "How do I receive my rental yields?",
+    answer: "Yields are automatically calculated based on your share ownership and disbursed directly to your verified M-Pesa phone number via Safaricom's B2C API on the 1st of every month. No manual withdrawal is required."
+  },
+  {
+    category: "Financials & Trading",
+    question: "How does the Secondary Market work?",
+    answer: "If you wish to exit your investment, you can list your shares on our Peer-to-Peer Marketplace at your desired asking price. When another user buys your listing via M-Pesa, our backend automatically transfers the digital shares to their account and the funds to yours."
+  },
+  {
+    category: "Financials & Trading",
+    question: "Why is my account locked pending KYC?",
+    answer: "To comply with Kenyan financial regulations and Anti-Money Laundering (AML) laws, we require all investors to verify their legal identity (National ID) and M-Pesa number before executing financial transactions."
+  },
+
+  // --- AGENTS & LISTINGS (Original) ---
+  {
+    category: "Agent Services",
+    question: "How do I list my property with Luxe Estate?",
+    answer: "Our curation process is selective. Please reach out via our Contact page. We require a preliminary architectural review before listing to ensure properties meet our luxury aesthetic standards."
+  },
+  {
+    category: "Agent Services",
     question: "How do I join the Agent Portal?",
-    answer: "Qualified agents can register at /agent/login. Once verified, you can manage inventory and view lead analytics."
-  },
-  {
-    question: "What is the Professional Tier?",
-    answer: "The Pro Tier offers verified badges, featured listing placement (boosting), and unblurred lead contact information for a monthly fee."
-  },
-  {
-    question: "Can I boost my property listing?",
-    answer: "Yes! Professional tier agents can 'Boost' listings to keep them at the top of the Architectural Inventory grid."
-  },
-
-  // Services & Operations
-  {
-    question: "Do you offer property maintenance?",
-    answer: "Yes, we provide professional move-in cleaning and routine maintenance services for properties listed on our platform."
-  },
-  {
-    question: "How do viewings work?",
-    answer: "Click the 'Contact Agent' button on any property page to schedule a viewing. We support both physical walkthroughs and virtual tours."
-  },
-  {
-    question: "Is there a fee for buyers?",
-    answer: "Luxe Estate is free for buyers to browse. Fees only apply to agents for premium features and listing services."
-  },
-
-  // Trust & Security
-  {
-    question: "Are the agents verified?",
-    answer: "Agents with a gold checkmark are part of our Professional Tier and have undergone a verification process to ensure trust and reliability."
+    answer: "Qualified agents can register at /agent/login. Once verified, you can manage inventory, view lead analytics, and upgrade to our Professional Tier for boosted listings."
   }
 ];
 
@@ -78,7 +75,7 @@ export default function FAQPage() {
         
         {/* Left Side: Editorial Content Column */}
         <section className="p-8 md:p-24 bg-white overflow-y-auto">
-          <div className="max-w-md mx-auto lg:mx-0">
+          <div className="max-w-xl mx-auto lg:mx-0">
             <header className="mb-20">
               <span className="text-[10px] uppercase tracking-[0.5em] text-[#E91E63] font-bold block mb-4">Client Services</span>
               <h1 className="font-serif text-5xl text-[#0D0D0D] leading-tight">Common <br/>Inquiries</h1>
@@ -88,10 +85,17 @@ export default function FAQPage() {
               {faqs.map((faq, i) => (
                 <div key={i} className="group transition-all">
                   <div className="flex gap-4 items-start mb-4">
-                    <span className="font-mono text-[9px] text-stone-400 mt-1">0{i + 1}</span>
-                    <h3 className="font-serif text-xl text-[#0D0D0D] group-hover:italic transition-all">
-                      {faq.question}
-                    </h3>
+                    <span className="font-mono text-[9px] text-stone-400 mt-1">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <div>
+                      <span className="text-[8px] uppercase tracking-widest text-emerald-600 font-bold block mb-1">
+                        {faq.category}
+                      </span>
+                      <h3 className="font-serif text-xl text-[#0D0D0D] group-hover:italic transition-all">
+                        {faq.question}
+                      </h3>
+                    </div>
                   </div>
                   <p className="text-stone-500 text-sm leading-relaxed border-l border-stone-100 pl-6 ml-[14px]">
                     {faq.answer}
@@ -116,7 +120,7 @@ export default function FAQPage() {
             className="absolute inset-0 z-0 opacity-60 bg-cover bg-center"
             style={{ backgroundImage: "url('https://images.unsplash.com/photo-1460317442991-0ec209397118?q=80&w=2070')" }}
           />
-          <div className="relative z-10 p-12 backdrop-blur-md bg-white/5 border border-white/10 text-center max-w-xs">
+          <div className="relative z-10 p-12 backdrop-blur-md bg-white/5 border border-white/10 text-center max-w-xs shadow-2xl">
             <p className="text-white font-serif text-2xl leading-relaxed">
               "Clarity in the complex world of luxury equity."
             </p>
