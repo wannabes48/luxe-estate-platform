@@ -15,8 +15,7 @@ export default async function Home() {
       <Hero />
       <EditorialStory
         title="Modernism Defined"
-        subtitle="A curated selection of architectural masterpieces in Nairobi and Kisii, designed for those who appreciate the intersection of light, space, and form."
-        image="/images/editorial-1.jpg"
+        subtitle="A curated selection of architectural masterpieces designed for those who appreciate the intersection of light, space, and form."
       />
       <section className="py-24 bg-stone-50">
         <div className="container mx-auto px-6 mb-12 flex justify-between items-end">
@@ -34,11 +33,11 @@ export default async function Home() {
           <div>
             <span className="text-accent tracking-[0.5em] text-[10px] uppercase font-bold mb-8 block">Inquiries</span>
             <h2 className="font-serif text-6xl mb-8">Start the <br/><span className="italic font-light">Conversation.</span></h2>
-            <p className="text-stone-500 text-lg max-w-sm mb-12">Reach out for private viewings or architectural consultations in Nairobi and Kisii.</p>
+            <p className="text-stone-500 text-lg max-w-sm mb-12">Reach out for private viewings or architectural consultations.</p>
             
             <div className="flex gap-12 text-stone-400 text-[10px] uppercase tracking-[0.3em]">
-              <div><p className="mb-2">Kisii HQ</p><p className="text-black">Kisii Town</p></div>
-              <div><p className="mb-2">Coordinates</p><p className="text-black">1.2921° S, 36.8219° E</p></div>
+              <div><p className="mb-2"></p><p className="text-black"></p></div>
+              <div><p className="mb-2"></p><p className="text-black"></p></div>
             </div>
           </div>
           

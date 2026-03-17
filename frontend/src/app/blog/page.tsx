@@ -31,7 +31,7 @@ const posts = [
     readTime: "4 min read"
   },
   {
-    title: "Emerging Markets: The Luxury Boom in Kisii's Milimani",
+    title: "Emerging Markets: The Luxury Boom in Kisumu's Milimani",
     excerpt: "A deep dive into the shifting demographics and architectural demands driving property valuations in Western Kenya's most exclusive corridors.",
     date: "Feb 18, 2026",
     category: "Market Intelligence",
