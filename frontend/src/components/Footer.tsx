@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Mail, Phone, X, Youtube, Instagram } from 'lucide-react';
+import { Mail, Phone, X, Youtube, Instagram, Globe } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -77,6 +77,7 @@ export default function Footer() {
         </div>
 
         <div className="flex gap-8 text-stone-400">
+          <a href="https://danielsiroportfolio.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label="PORTFOLIO" className="hover:text-[#E91E63] transition-colors"><Globe size={18}/></a>
           <a href="https://x.com" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)" className="hover:text-[#E91E63] transition-colors"><X size={18} /></a>
           <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="hover:text-[#E91E63] transition-colors"><Youtube size={18} /></a>
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-[#E91E63] transition-colors"><Instagram size={18} /></a>
