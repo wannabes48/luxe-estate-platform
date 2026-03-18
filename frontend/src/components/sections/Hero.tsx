@@ -116,7 +116,7 @@ export default function Hero() {
                     {/* Trust Metrics */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8 border-t border-white/10">
                         <div>
-                            <p className="text-2xl md:text-3xl font-serif text-white">10k <span className="text-sm text-emerald-400">KES</span></p>
+                            <p className="text-2xl md:text-3xl font-serif text-white">1000 <span className="text-sm text-emerald-400">KES</span></p>
                             <p className="text-[9px] md:text-[10px] uppercase tracking-widest text-stone-500 mt-2">Minimum Entry</p>
                         </div>
                         <div>

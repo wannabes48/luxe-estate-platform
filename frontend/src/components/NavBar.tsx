@@ -140,7 +140,7 @@ export default function NavBar() {
               </Link>
               <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-white/40">
                 <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
-                <Link href="/legal/terms" onClick={() => setMobileMenuOpen(false)}>Terms</Link>
+                <Link href="/terms" onClick={() => setMobileMenuOpen(false)}>Terms</Link>
               </div>
             </div>
           </motion.div>
