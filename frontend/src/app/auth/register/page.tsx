@@ -14,6 +14,7 @@ function RegisterForm() {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
+    const [isSubmitted, setIsSubmitted] = useState(false);
     
     // Auth Mode State for Phone OTP
     const [authMode, setAuthMode] = useState<'standard' | 'phone_otp'>('standard');
@@ -35,8 +36,12 @@ function RegisterForm() {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/dashboard`
-            }
+                redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'select_account',
+                },
+            },
         });
         if (error) setErrorMsg(error.message);
     };
@@ -97,6 +102,12 @@ function RegisterForm() {
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                data: {
+                    full_name: formData.fullName, // Storing in metadata as backup
+                },
+                },
             });
 
             if (authError) throw authError;
@@ -115,11 +126,12 @@ function RegisterForm() {
 
                 if (profileError) console.error("Profile Error:", profileError);
 
-                setSuccessMsg("Registration successful! Please check your email to verify your account.");
-                setTimeout(() => router.push('/auth/login'), 3000);
+                setIsSubmitted(true);
+
             }
         } catch (error: any) {
             setErrorMsg(error.message);
+            setLoading(false);
         } finally {
             setLoading(false);
         }
@@ -127,16 +139,13 @@ function RegisterForm() {
 
     return (
         <main className="min-h-screen flex w-full relative bg-[#FAFAFA]">
-            {/* Back Button */}
-                <button onClick={() => router.back()} className="text-[10px] uppercase tracking-widest text-stone-500 hover:text-stone-900 mb-8 flex items-center gap-2">
-                    ← Go Back
-                </button>
+
 
             {/* --- LEFT SIDE: Image & Glass Overlay --- */}
             <section className="relative hidden lg:flex lg:w-1/2 items-center justify-center overflow-hidden">
                 <div
                     className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-1000 hover:scale-105"
-                    style={{ backgroundImage: "url('https://images.unsplash.com/photo-1613490900233-0402ef0a2db7?q=80&w=1974&auto=format&fit=crop')" }}
+                    style={{ backgroundImage: "url('https://vaal.co.ke/wp-content/uploads/2025/09/WhatsApp-Image-2025-09-11-at-09.27.43-jpeg.webp')" }}
                 />
                 <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
@@ -163,6 +172,31 @@ function RegisterForm() {
             {/* --- RIGHT SIDE: The Registration Form --- */}
             <section className="w-full lg:w-1/2 flex items-center justify-center px-6 py-20 pt-32 lg:pt-20 overflow-y-auto">
                 <div className="w-full max-w-md bg-white p-10 border border-stone-200 shadow-xl my-auto">
+                    {isSubmitted ? (
+                        /* SUCCESS / VERIFICATION VIEW */
+                        <div className="text-center animate-in fade-in zoom-in duration-500">
+                            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <h1 className="text-3xl font-serif text-stone-900 mb-4">Verify your email</h1>
+                            <p className="text-sm text-stone-500 leading-relaxed mb-8">
+                                we have sent a verification link to <span className="font-bold text-stone-900">{formData.email}</span>. 
+                                Please check your inbox and click the link to activate your account.
+                            </p>
+                            <button 
+                                onClick={() => router.push('/auth/login')}
+                                className="w-full bg-black text-white py-5 text-xs uppercase tracking-[0.2em] font-bold hover:bg-emerald-600 transition-all shadow-lg"
+                            >
+                                Go to Login
+                            </button>
+                            <p className="mt-6 text-[10px] text-stone-400 uppercase tracking-widest">
+                                Did not receive it? Check your spam folder.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-serif text-stone-900">Join Luxe</h1>
                         <p className="text-xs text-stone-500 uppercase tracking-widest mt-2">
@@ -252,6 +286,8 @@ function RegisterForm() {
                             </Link>
                         </p>
                     </div>
+                </>
+            )}
                 </div>
             </section>
         </main>
