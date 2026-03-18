@@ -440,7 +440,7 @@ export default function InvestorDashboard() {
                                                 </div>
                                                 <div>
                                                     <p className="text-[9px] uppercase tracking-widest text-stone-500 mb-1">Invested Value</p>
-                                                    <p className="font-bold text-lg">KES {inv.amount_invested.toLocaleString()}</p>
+                                                    <p className="font-bold text-lg">KES {inv.total_invested.toLocaleString()}</p>
                                                 </div>
                                             </div>
                                         </div>
