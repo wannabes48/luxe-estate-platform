@@ -1,6 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import TransactionVolumeChart from './VolumeChart';
 
 export default function AdminOverview() {
     const [metrics, setMetrics] = useState({
@@ -16,7 +17,7 @@ export default function AdminOverview() {
             // 1. Total Capital & Shares from Investments
             const { data: investments } = await supabase
                 .from('investments')
-                .select('amount_invested, shares_owned, user_id');
+                .select('total_invested, shares_owned, user_id');
             
             // 2. Total Fractional Properties
             const { count: propertiesCount } = await supabase
@@ -24,7 +25,7 @@ export default function AdminOverview() {
                 .select('*', { count: 'exact', head: true });
 
             if (investments) {
-                const capital = investments.reduce((sum, inv) => sum + Number(inv.amount_invested), 0);
+                const capital = investments.reduce((sum, inv) => sum + Number(inv.total_invested), 0);
                 const shares = investments.reduce((sum, inv) => sum + Number(inv.shares_owned), 0);
                 
                 // Get unique investors
@@ -75,15 +76,7 @@ export default function AdminOverview() {
             </div>
 
             {/* Placeholder for future charts or recent activity */}
-            <div className="bg-white border border-stone-200 rounded-xl p-8 h-96 flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mb-4">
-                    <span className="text-2xl">📊</span>
-                </div>
-                <h3 className="font-serif text-xl text-stone-900 mb-2">Financial Charts Coming Soon</h3>
-                <p className="text-sm text-stone-500 max-w-md">
-                    Historical yield trends and secondary market trading volume will populate here once enough data is gathered.
-                </p>
-            </div>
+            <TransactionVolumeChart />
         </div>
     );
 }
