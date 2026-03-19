@@ -33,7 +33,7 @@ export default function EditorialStory({ title, subtitle }: EditorialStoryProps)
             {title || "Curation as Architecture."}
           </h2>
           
-          <p className="text-stone-500 text-base md:text-lg leading-relaxed max-w-md font-light mb-12">
+          <p className="text-stone-800 text-base md:text-lg leading-relaxed max-w-md font-light mb-12">
             {subtitle || "We bridge the gap between physical spaces and digital liquidity, offering unprecedented access to premium architectural assets."}
           </p>
           

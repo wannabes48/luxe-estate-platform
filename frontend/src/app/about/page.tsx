@@ -8,22 +8,51 @@ export default function AboutPage() {
       <ReturnNavBar />
 
       {/* Hero Section */}
-      <section className="pt-40 pb-20 px-6 lg:px-12 max-w-[1440px] mx-auto">
-        <div className="max-w-5xl">
-          <span className="text-[#E91E63] tracking-[0.5em] text-[10px] uppercase font-bold mb-8 block">Our Philosophy</span>
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl mb-12 text-[#0D0D0D] leading-[1.1]">
-            Redefining <br/><span className="italic font-light text-stone-500">Ownership.</span>
-          </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 font-sans text-stone-600 text-base md:text-lg leading-relaxed">
-            <p>
-              At Luxe Estate, we believe that luxury is not just a price point, but a standard of architectural integrity. We curate homes that respect their environment and challenge traditional aesthetics across the Kenyan landscape.
-            </p>
-            <p>
-              But curation was only the beginning. We have evolved into a Web3-integrated financial exchange, bridging the gap between physical real estate and digital liquidity. By fractionalizing premium assets, we make building a legacy accessible to the modern investor.
-            </p>
+      <div className="pt-40 pb-20 px-6 lg:px-12 max-w-[1440px] mx-auto">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-16 mb-16">
+          
+          <div className="max-w-4xl flex-1">
+            <span className="text-[#E91E63] tracking-[0.5em] text-[10px] uppercase font-bold mb-8 block">Our Philosophy</span>
+              <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl mb-12 text-[#0D0D0D] leading-[1.1]">
+                Redefining <br/>
+                <span className="italic font-light text-stone-500">Ownership.</span>
+              </h1>
+          </div>
+          {/* Right Side: Glassmorphism Architectural Plan Image */}
+          {/* Visually fills the blank space next to the heading on desktop */}
+          <div className="relative group flex-shrink-0 w-full lg:w-auto flex justify-center lg:justify-end">
+            {/* Pink glow effect behind the glass */}
+            <div className="absolute -inset-4 bg-[#E91E63]/10 rounded-full blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+            {/* The Glass Container */}
+            <div className="relative backdrop-blur-xl bg-white/5 border border-white/10 p-3 rounded-3xl shadow-2xl overflow-hidden aspect-[4/3] w-full max-w-md lg:max-w-sm transform lg:rotate-3 hover:rotate-0 transition-transform duration-500 ease-out">
+              <img 
+                src="https://www.mymodernhome.com/media/images/My_Modern_Home_Plan.2e16d0ba.fill-1920x1080.format-webp_ETkA43E.webp" 
+                alt="Modernist architectural floor plan" 
+                className="w-full h-full object-cover rounded-2xl opacity-80 mix-blend-luminosity group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-500"
+              />
+        
+              {/* Subtle glass reflection overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-white/5 rounded-2xl"></div>
+        
+              {/* Minimalist Web3 Tokenized detail */}
+              <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#E91E63] animate-pulse"></div>
+                <span className="text-[9px] text-white/90 uppercase tracking-widest font-bold">LXE-NBO-001</span>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 font-sans text-stone-1000 text-base md:text-lg leading-relaxed">
+          <p>
+            At Luxe Estate, we believe that luxury is not just a price point, but a standard of architectural integrity. We curate homes that respect their environment and challenge traditional aesthetics across the Kenyan landscape.
+          </p>
+          <p>
+            But curation was only the beginning. We have evolved into a Web3-integrated financial exchange, bridging the gap between physical real estate and digital liquidity. By fractionalizing premium assets, we make building a legacy accessible to the modern investor.
+          </p>
+        </div>
+      </div>
 
       {/* Immersive Image Break */}
       <section className="px-6 lg:px-12 max-w-[1440px] mx-auto mb-32">

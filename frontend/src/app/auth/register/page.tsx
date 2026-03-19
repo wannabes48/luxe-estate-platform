@@ -106,11 +106,15 @@ function RegisterForm() {
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
                 data: {
                     full_name: formData.fullName, // Storing in metadata as backup
+                    phone_number: formData.phoneNumber,
+                    national_id: formData.nationalId,
+                    role: formData.role
                 },
                 },
             });
 
             if (authError) throw authError;
+            setIsSubmitted(true);
 
             if (authData.user) {
                 const { error: profileError } = await supabase
@@ -261,7 +265,7 @@ function RegisterForm() {
                                 </div>
                                 <div>
                                     <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">M-Pesa Number</label>
-                                    <input required type="tel" placeholder="2547..." className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" onChange={e => setFormData({...formData, phoneNumber: e.target.value})} />
+                                    <input required type="tel" placeholder="+2547..." className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all" onChange={e => setFormData({...formData, phoneNumber: e.target.value})} />
                                 </div>
                             </div>
                             <div>
