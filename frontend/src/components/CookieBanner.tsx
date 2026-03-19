@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react'; 
 
 export default function CookieBanner() {
   const [isVisible, setIsVisible] = useState(false);
@@ -28,6 +29,12 @@ export default function CookieBanner() {
     setIsVisible(false);
   };
 
+  const dismissBanner = () => {
+    // Treating a dismissal as a decline/essential-only for compliance
+    localStorage.setItem('luxe_cookie_consent', 'dismissed');
+    setIsVisible(false);
+  };
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -38,7 +45,16 @@ export default function CookieBanner() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="fixed bottom-0 left-0 w-full z-[100] p-2 md:p-4 pointer-events-none"
         >
-          <div className="max-w-[1440px] mx-auto pointer-events-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-black/90 backdrop-blur-md border border-white/10 p-4 md:px-8 md:py-4 shadow-2xl">
+          <div className="relative max-w-[1440px] mx-auto pointer-events-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-black/90 backdrop-blur-md border border-white/10 p-4 md:px- md:pr-14 md:py-4 shadow-2xl">
+
+          {/* The Close Button */}
+            <button 
+              onClick={dismissBanner}
+              className="absolute top-3 right-3 md:top-1/2 md:-translate-y-1/2 md:right-4 text-stone-500 hover:text-white transition-colors p-1"
+              aria-label="Close"
+            >
+              <X size={16} strokeWidth={2} />
+            </button>
             
             {/* Text Content */}
             <div className="max-w-3xl">
