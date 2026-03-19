@@ -4,6 +4,7 @@ import "./globals.css";
 import ClientCursor from '@/components/Cursor'
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
+import CookieBanner from '@/components/CookieBanner';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -85,6 +86,8 @@ export default function RootLayout({
           `}
         </Script>
         <Script src="https://luxe-ai-chatbot-widget.wannabes48.workers.dev/widget.js" strategy="lazyOnload" />
+        {/* Global Cookie Banner */}
+        <CookieBanner />
       </body>
     </html>
   );
