@@ -112,7 +112,7 @@ export default function SettingsPage() {
                                     <p className="font-medium text-stone-900 text-sm mt-1">{profile?.full_name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[9px] uppercase tracking-widest text-stone-400">National ID</p>
+                                    <p className="text-[9px] uppercase tracking-widest text-stone-400">National ID/PASSPORT</p>
                                     <p className="font-mono text-stone-900 text-sm mt-1">{profile?.national_id}</p>
                                 </div>
                                 <p className="text-[9px] text-stone-400 italic mt-4 border-t border-stone-100 pt-4">
