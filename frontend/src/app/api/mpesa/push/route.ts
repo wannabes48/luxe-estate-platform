@@ -12,9 +12,8 @@ export async function POST(req: Request) {
 
         // 1. Format Phone Number (Assuming Kenya format 07... or 254...)
         let formattedPhone = phoneNumber.replace(/[^0-9]/g, '');
-        if (formattedPhone.startsWith('0')) {
-            formattedPhone = '254' + formattedPhone.slice(1);
-        }
+        if (formattedPhone.startsWith('0')) formattedPhone = '254' + formattedPhone.substring(1);
+        if (formattedPhone.startsWith('+')) formattedPhone = formattedPhone.substring(1);
 
         // 2. Generate M-Pesa Authentication & Timestamps
         const shortCode = process.env.MPESA_SHORTCODE!;
@@ -40,7 +39,7 @@ export async function POST(req: Request) {
                 PartyA: formattedPhone,
                 PartyB: shortCode,
                 PhoneNumber: formattedPhone,
-                CallBackURL: `${process.env.NEXT_PUBLIC_BASE_URL}/api/mpesa/callback`,
+                CallBackURL: `https://noncontending-tobi-overstrongly.ngrok-free.dev -> http://localhost:3000/api/mpesa/callback`, // Update with your public URL
                 AccountReference: 'Luxe Estate',
                 TransactionDesc: `${purchaseType} Market Share Purchase`
             })
@@ -63,7 +62,7 @@ export async function POST(req: Request) {
             status: 'pending'
         });
 
-        return NextResponse.json({ success: true, checkoutRequestId: stkData.CheckoutRequestID });
+        return NextResponse.json({ success: true, message: "Push sent successfully", checkoutRequestId: stkData.CheckoutRequestID });
 
     } catch (error: any) {
         console.error("STK Push Error:", error);

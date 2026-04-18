@@ -18,12 +18,6 @@ export default async function Home() {
         subtitle="A curated selection of architectural masterpieces designed for those who appreciate the intersection of light, space, and form."
       />
       <section className="py-24 bg-stone-50">
-        <div className="container mx-auto px-6 mb-12 flex justify-between items-end">
-          <div>
-            <span className="text-accent tracking-[0.4em] text-[10px] uppercase font-bold mb-4 block">Curated</span>
-            <h2 className="text-5xl font-serif">Featured Estates</h2>
-          </div>
-        </div>
         <FeaturedCarousel />
       </section>
       <CollectionPreview />
