@@ -17,9 +17,7 @@ export default async function Home() {
         title="Modernism Defined"
         subtitle="A curated selection of architectural masterpieces designed for those who appreciate the intersection of light, space, and form."
       />
-      <section className="py-24 bg-stone-50">
         <FeaturedCarousel />
-      </section>
       <CollectionPreview />
 
       <section className="py-32 px-6 bg-stone-50 border-t border-stone-100">
