@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ethers } from 'ethers';
 import LuxuryToast from '@/components/ui/LuxuryToast';
 import SellSharesModal from '@/components/SellSharesModal';
+import KYCModal from '@/components/KYCModal';
 
 const ERC20_ABI = [
     "function balanceOf(address owner) view returns (uint256)",
@@ -37,6 +38,10 @@ export default function InvestorDashboard() {
         phoneNumber: '',
         role: 'investor'
     });
+
+    // --- KYC MODAL STATE ---
+    const [showKycPrompt, setShowKycPrompt] = useState(false);
+    const [isKycMandatory, setIsKycMandatory] = useState(false);
 
     const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type, show: true });
@@ -73,6 +78,14 @@ export default function InvestorDashboard() {
                 setShowKycGate(true);
                 setLoading(false);
                 return; // Stop loading the rest of the dashboard until KYC is done
+            }
+
+            // Passive KYC Prompt Check
+            if (profile && profile.kyc_verified === false) {
+                const hasDismissed = sessionStorage.getItem('kyc_prompt_dismissed');
+                if (!hasDismissed) {
+                    setShowKycPrompt(true);
+                }
             }
 
             // 3. Fetch user's investments
@@ -130,8 +143,7 @@ export default function InvestorDashboard() {
                     phone_number: kycData.phoneNumber,
                     role: kycData.role,
                     kyc_verified: false // Remains false until admin manually reviews or SmileID API clears it
-                })
-                .eq('id', user.id || user.sub);
+                });
 
             if (error) throw error;
 
@@ -141,7 +153,9 @@ export default function InvestorDashboard() {
             // Reload the page to fetch investments now that they are cleared
             window.location.reload(); 
         } catch (error: any) {
+            console.error("KYC Submit Error:", error);
             showToast(error.message || "Failed to save profile details.", "error");
+            alert("Error saving profile: " + (error.message || "Unknown error"));
         } finally {
             setKycLoading(false);
         }
@@ -460,13 +474,20 @@ export default function InvestorDashboard() {
                                             )}
 
                                             <button 
-                                                onClick={() => setSellModalData({
-                                                    isOpen: true,
-                                                    propertyId: inv.property_id,
-                                                    title: inv.properties?.title || 'Property',
-                                                    maxShares: inv.shares_owned,
-                                                    price: shareData?.price_per_share || 0
-                                                })}
+                                                onClick={() => {
+                                                    if (user?.kyc_verified === false) {
+                                                        setIsKycMandatory(true);
+                                                        setShowKycPrompt(true);
+                                                    } else {
+                                                        setSellModalData({
+                                                            isOpen: true,
+                                                            propertyId: inv.property_id,
+                                                            title: inv.properties?.title || 'Property',
+                                                            maxShares: inv.shares_owned,
+                                                            price: shareData?.price_per_share || 0
+                                                        });
+                                                    }
+                                                }}
                                                 className="text-[10px] bg-[#0D0D0D] text-white px-4 py-2 uppercase tracking-widest hover:bg-emerald-600 transition-colors font-bold rounded-sm"
                                             >
                                                 Sell Shares
@@ -495,6 +516,17 @@ export default function InvestorDashboard() {
                     }}
                 />
             )}
+
+            {/* The KYC Modal */}
+            <KYCModal 
+                isOpen={showKycPrompt} 
+                onClose={() => {
+                    sessionStorage.setItem('kyc_prompt_dismissed', 'true');
+                    setShowKycPrompt(false);
+                    setIsKycMandatory(false); // reset
+                }} 
+                isMandatory={isKycMandatory} 
+            />
         </div>
     );
 }

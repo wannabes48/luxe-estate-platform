@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { UploadCloud, CheckCircle2, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
+import { UploadCloud, CheckCircle2, ShieldAlert, ArrowLeft } from 'lucide-react';
 
 export default function KYCVerificationPage() {
     const router = useRouter();
@@ -120,6 +121,14 @@ export default function KYCVerificationPage() {
 
     return (
         <div className="max-w-3xl mx-auto py-12 px-6">
+            <Link 
+                href="/dashboard/settings" 
+                className="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-stone-400 hover:text-stone-900 font-bold mb-8 transition-colors group"
+            >
+                <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+                Back to Settings
+            </Link>
+
             <div className="mb-10">
                 <span className="text-[#E91E63] tracking-[0.2em] text-[10px] uppercase font-bold block mb-2">Compliance</span>
                 <h1 className="text-4xl font-serif text-stone-900">Identity Verification</h1>

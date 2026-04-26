@@ -3,9 +3,11 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ShieldAlert, CheckCircle2, Clock, ChevronRight, ArrowLeft } from 'lucide-react';
 
 export default function SettingsPage() {
     const router = useRouter();
+    const [kycStatus, setKycStatus] = useState<'unverified' | 'pending' | 'verified'>('unverified');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [profile, setProfile] = useState<any>(null);
@@ -13,30 +15,36 @@ export default function SettingsPage() {
     const [message, setMessage] = useState({ text: '', type: '' });
 
     useEffect(() => {
-        async function fetchProfile() {
+        async function fetchSettingsData() {
             const { data: { session }, error } = await supabase.auth.getSession();
             if (!session || error) {
                 router.push('/auth/login');
                 return;
             }
 
-            // Fetch from user_profiles table based on your current setup
             const { data, error: profileError } = await supabase
                 .from('user_profiles')
                 .select('*')
                 .eq('id', session.user.id)
                 .single();
 
-            if (data) {
+            if (data && !profileError) {
                 setProfile(data);
                 setPhoneInput(data.phone_number || '');
+                // Use kyc_status if it exists, otherwise fall back to kyc_verified boolean
+                if (data.kyc_status) {
+                    setKycStatus(data.kyc_status);
+                } else if (data.kyc_verified) {
+                    setKycStatus('verified');
+                } else {
+                    setKycStatus('unverified');
+                }
             } else {
                 console.error("Profile not found:", profileError);
             }
             setLoading(false);
         }
-
-        fetchProfile();
+        fetchSettingsData();
     }, [router]);
 
     const handleUpdatePhone = async (e: React.FormEvent) => {
@@ -76,87 +84,122 @@ export default function SettingsPage() {
             </nav>
 
             <main className="max-w-4xl mx-auto p-6 lg:p-12">
-                <div className="mb-12 border-b border-stone-200 pb-8">
-                    <h2 className="text-4xl font-serif text-stone-900 mb-2">Account Settings</h2>
-                    <p className="text-stone-500 text-sm">Manage your compliance profile and M-Pesa disbursement details.</p>
-                </div>
+                <Link 
+                    href="/dashboard" 
+                    className="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest text-stone-400 hover:text-stone-900 font-bold mb-8 transition-colors group"
+                >
+                    <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+                    Back to Dashboard
+                </Link>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <header className="mb-10 border-b border-stone-200 pb-8">
+                    <h1 className="text-3xl md:text-4xl font-serif text-stone-900">Account Settings</h1>
+                    <p className="text-sm text-stone-500 mt-2">Manage your portfolio preferences and compliance status.</p>
+                </header>
+
+                <div className="space-y-8">
                     
-                    {/* KYC Status Card */}
-                    <div className="md:col-span-1">
-                        <div className="bg-white border border-stone-200 p-6 shadow-sm">
-                            <h3 className="text-[10px] uppercase tracking-widest text-stone-400 font-bold mb-4">KYC Status</h3>
-                            
-                            {profile?.kyc_verified ? (
-                                <div className="bg-emerald-50 border border-emerald-100 p-4 flex items-center gap-3">
-                                    <span className="text-emerald-600 text-xl">✓</span>
-                                    <div>
-                                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Verified</p>
-                                        <p className="text-[10px] text-emerald-600 mt-1">Trading & Payouts Enabled</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-amber-50 border border-amber-100 p-4 flex items-center gap-3">
-                                    <span className="text-amber-600 text-xl">⚠️</span>
-                                    <div>
-                                        <p className="text-xs font-bold text-amber-800 uppercase tracking-widest">Action Required</p>
-                                        <p className="text-[10px] text-amber-700 mt-1">Documents pending review</p>
-                                    </div>
-                                </div>
-                            )}
+                    {/* --- SECURITY & COMPLIANCE SECTION --- */}
+                    <section className="bg-white border border-stone-200 p-6 md:p-8 shadow-sm">
+                        <h2 className="text-xs uppercase tracking-widest text-stone-400 font-bold mb-6 border-b border-stone-100 pb-3">
+                            Security & Compliance
+                        </h2>
 
-                            <div className="mt-6 space-y-4">
-                                <div>
-                                    <p className="text-[9px] uppercase tracking-widest text-stone-400">Legal Name</p>
-                                    <p className="font-medium text-stone-900 text-sm mt-1">{profile?.full_name}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[9px] uppercase tracking-widest text-stone-400">National ID/PASSPORT</p>
-                                    <p className="font-mono text-stone-900 text-sm mt-1">{profile?.national_id}</p>
-                                </div>
-                                <p className="text-[9px] text-stone-400 italic mt-4 border-t border-stone-100 pt-4">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <div>
+                                <h3 className="text-lg font-serif text-stone-900 mb-1">Identity Verification (KYC)</h3>
+                                <p className="text-sm text-stone-500 max-w-md">
+                                    Required by the Capital Markets Authority for fractional real estate transactions.
+                                </p>
+                            </div>
+
+                            {/* Dynamic Status Display */}
+                            <div className="w-full md:w-auto">
+                                {kycStatus === 'verified' && (
+                                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-3 border border-emerald-100">
+                                        <CheckCircle2 size={18} />
+                                        <span className="text-[10px] uppercase tracking-widest font-bold">Fully Verified</span>
+                                    </div>
+                                )}
+
+                                {kycStatus === 'pending' && (
+                                    <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-3 border border-amber-100">
+                                        <Clock size={18} />
+                                        <span className="text-[10px] uppercase tracking-widest font-bold">Under Review</span>
+                                    </div>
+                                )}
+
+                                {kycStatus === 'unverified' && (
+                                    <Link 
+                                        href="/dashboard/kyc"
+                                        className="flex items-center justify-between gap-4 w-full md:w-auto bg-stone-900 text-white px-6 py-4 hover:bg-emerald-600 transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <ShieldAlert size={16} />
+                                            <span className="text-[10px] uppercase tracking-widest font-bold">Complete KYC</span>
+                                        </div>
+                                        <ChevronRight size={16} className="text-stone-400 group-hover:text-white transition-colors" />
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* --- BASIC PROFILE SECTION --- */}
+                    <section className="bg-white border border-stone-200 p-6 md:p-8 shadow-sm">
+                        <h2 className="text-xs uppercase tracking-widest text-stone-400 font-bold mb-6 border-b border-stone-100 pb-3">
+                            Personal Information
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-1">Legal Full Name</label>
+                                <div className="text-sm text-stone-900 font-medium">{profile?.full_name || 'Not provided'}</div>
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-1">National ID / Passport</label>
+                                <div className="text-sm font-mono text-stone-900">{profile?.national_id || 'Not provided'}</div>
+                            </div>
+                            <div className="md:col-span-2">
+                                <p className="text-[9px] text-stone-400 italic border-t border-stone-100 pt-4">
                                     Name and ID cannot be changed after submission to prevent fraud. Contact support for legal name changes.
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    {/* Editable Settings */}
-                    <div className="md:col-span-2 space-y-8">
-                        
+                    {/* --- FINANCIAL DETAILS --- */}
+                    <section className="bg-white border border-stone-200 p-6 md:p-8 shadow-sm">
                         {message.text && (
-                            <div className={`p-4 text-xs font-bold uppercase tracking-widest ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                            <div className={`mb-6 p-4 text-xs font-bold uppercase tracking-widest ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                                 {message.text}
                             </div>
                         )}
+                        <h2 className="text-xs uppercase tracking-widest text-stone-400 font-bold mb-6 border-b border-stone-100 pb-3">
+                            Financial Details
+                        </h2>
+                        
+                        <form onSubmit={handleUpdatePhone} className="space-y-6">
+                            <div>
+                                <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">M-Pesa Disbursement Number</label>
+                                <p className="text-xs text-stone-500 mb-4">This number is used for purchasing shares via STK Push and receiving your automated monthly rental yields.</p>
+                                <input 
+                                    required 
+                                    type="tel" 
+                                    className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 font-mono text-lg transition-colors"
+                                    value={phoneInput}
+                                    onChange={(e) => setPhoneInput(e.target.value)}
+                                />
+                            </div>
 
-                        <div className="bg-white border border-stone-200 p-8 shadow-sm">
-                            <h3 className="font-serif text-2xl text-stone-900 mb-6">Financial Details</h3>
-                            
-                            <form onSubmit={handleUpdatePhone} className="space-y-6">
-                                <div>
-                                    <label className="text-[10px] uppercase tracking-widest text-stone-500 block mb-2 font-bold">M-Pesa Disbursement Number</label>
-                                    <p className="text-xs text-stone-500 mb-4">This number is used for purchasing shares via STK Push and receiving your automated monthly rental yields.</p>
-                                    <input 
-                                        required 
-                                        type="tel" 
-                                        className="w-full bg-[#FAFAFA] border border-stone-200 p-4 outline-none focus:border-emerald-500 font-mono text-lg transition-colors"
-                                        value={phoneInput}
-                                        onChange={(e) => setPhoneInput(e.target.value)}
-                                    />
-                                </div>
-
-                                <button 
-                                    disabled={saving || phoneInput === profile?.phone_number}
-                                    type="submit" 
-                                    className="bg-[#0D0D0D] text-white px-8 py-4 text-xs uppercase tracking-widest hover:bg-emerald-600 transition-colors disabled:opacity-50 font-bold"
-                                >
-                                    {saving ? 'Updating...' : 'Save Changes'}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
+                            <button 
+                                disabled={saving || phoneInput === profile?.phone_number}
+                                type="submit" 
+                                className="bg-[#0D0D0D] text-white px-8 py-4 text-xs uppercase tracking-widest hover:bg-emerald-600 transition-colors disabled:opacity-50 font-bold"
+                            >
+                                {saving ? 'Updating...' : 'Save Changes'}
+                            </button>
+                        </form>
+                    </section>
 
                 </div>
             </main>
