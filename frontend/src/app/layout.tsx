@@ -5,6 +5,7 @@ import ClientCursor from '@/components/Cursor'
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
 import CookieBanner from '@/components/CookieBanner';
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({
   variable: '--font-inter',
@@ -77,6 +78,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} antialiased`}>
         <ClientCursor />
         {children}
+        <Analytics />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''} />
         <Script id="chatbot-config" strategy="beforeInteractive">
           {`
